@@ -12,7 +12,19 @@ test.before(async()=>{
  directory=fs.mkdtempSync(path.join(os.tmpdir(),'swifly-night-browser-'));process.env.SWIFLY_DATA_DIR=directory;process.env.SWIFLY_REACT='true';process.env.SWIFLY_KIDS_SECRET='movie-night-browser-test-secret-'.repeat(2);delete process.env.SWIFLY_ACCESS_PIN;
  const now=Date.now(),state={version:1,users:{},sessions:{},friends:[],requests:[],blocks:[],messages:[],notifications:[],homes:{},invites:{},movieNights:{revision:1,events:{[liveId]:event(liveId,now-20000,{winnerId:1,playbackStartedAt:now-20000}),[voteId]:event(voteId,now+3600000),[errorId]:event(errorId,now-20000,{winnerId:2})}}};fs.writeFileSync(path.join(directory,'accounts.json'),JSON.stringify(state));
  const video=path.join(directory,'shared.webm');execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-f','lavfi','-i','testsrc2=size=640x360:rate=12','-t','180','-c:v','libvpx','-b:v','240k','-an','-y',video],{timeout:90000});
- api=loadServer();api.setTmdb(tmdb);api.setMovieNightSource(async id=>id===2?{status:'error'}:{status:'ok',playbackUrl:'/__qa/night.webm',streamType:'webm'});api.app.get('/__qa/night.webm',(_req,res)=>res.sendFile(video));await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;
+ api=loadServer();api.setTmdb(tmdb);api.setMovieNightSource(async id=>id===2?{status:'error'}:{status:'ok',playbackUrl:'/__qa/night.webm',streamType:'webm'});api.app.get('/__qa/night.webm',(_req,res)=>res.sendFile(video));
+ // The server has already installed its catch-all 404 by the time this isolated
+ // browser fixture is registered. Move only this QA route ahead of that handler.
+ const layers=api.app._router?.stack||[],fixtureLayer=layers.pop();
+ const notFound=layers.findIndex(layer=>!layer.route&&String(layer.handle).includes('Page not found.'));
+ assert(notFound>=0&&fixtureLayer?.route?.path==='/__qa/night.webm','Fixture video must be registered before the production 404 handler.');
+ layers.splice(notFound,0,fixtureLayer);
+ await new Promise(resolve=>api.httpServer.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+api.httpServer.address().port;
+ // Reject HTML/404 fixture responses rather than misdiagnosing them as player codec errors.
+ const probe=await fetch(origin+'/__qa/night.webm',{headers:{Range:'bytes=0-1023'}});
+ assert.equal(probe.status,206,'QA media must support byte-range streaming');
+ assert.match(probe.headers.get('content-type')||'',/^video\/webm/,'QA media must be served as video, not a fallback HTML page');
+ await probe.body?.cancel();
  browser=await chromium.launch({headless:true,executablePath,args:['--no-sandbox']});
 });
 test.after(async()=>{await browser?.close();api?.movieNights.close();if(api)await new Promise(resolve=>api.io.close(resolve));if(directory)fs.rmSync(directory,{recursive:true,force:true});});
