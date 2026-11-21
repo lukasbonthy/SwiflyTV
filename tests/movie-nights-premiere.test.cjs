@@ -26,7 +26,8 @@ test('first-party modal has accessible account modes, password confirmation and 
  const d=new JSDOM(movieNightsMarkup({snapshot:sample})).window.document;
  const dialog=d.querySelector('[data-night-auth-overlay] [role="dialog"]');
  assert.equal(dialog.getAttribute('aria-modal'),'true');
- assert.equal(d.querySelector('[data-night-auth-form]').getAttribute('action'),null);
+ assert.equal(d.querySelector('[data-night-auth-form]').getAttribute('action'),'/api/connect/auth/signup');
+ assert.equal(d.querySelector('[data-night-auth-form]').getAttribute('method'),'post','no password-bearing GET fallback');
  assert.equal(d.querySelector('input[name="password"]').type,'password');
  assert.equal(d.querySelector('input[name="confirmPassword"]').type,'password');
 });
