@@ -1,6 +1,20 @@
 # SwiflyTV working checkpoint
 
-Updated: November 15, 2026 (UTC).
+Updated: November 20, 2026 (UTC).
+
+## Active Movie Nights and screenshot corrections
+
+Work continues on isolated review branch `feat/swifly-movie-nights-20261116`, based on main `35751429ce99446b07893920595f30037e51055b`. **Complete verification before changing main or production.** The November15 freeze applied while building the review version. A newer user instruction in the November20 merge chat explicitly says “Merge the new movie nights”; that authorization permits the completed, verified integration. No merge occurred there because this branch still had zero remote commits ahead of main. The requested work includes Home controls, episode design and featured synchronized Movie Nights. Production was last observed live on the same35751429 app, Render deployment `dep-dbvpg05ckfvc73bsehg0` (November20). The older deployment sections below are historical.
+
+Spec and plan: `docs/superpowers/specs/2026-11-20-movie-nights-design.md` and `docs/superpowers/plans/2026-11-20-movie-nights.md`.
+
+Implemented locally: independent underlined Home movie/series period controls with in-place native React rail refresh; Kids duplicate-search and parent-button layout fixes; matte episode lists, actual progress/watched controls, one expanded season and24-episode paging; persistent automatic Movie Nights service and livestream-style page with shared native source, personal pause/Resume Live, account voting, bounded live chat and reconnect. Friday/Saturday20:00 America/New_York and a five-minute voting cutoff are configurable implementation defaults. Keep existing parental/access secrets, ripples, artwork, account storage and iPad safeguards.
+
+Service source commits: `0a66452`, `57d6dac`, `266b352`, `6f60efc`. Independent review led to corrections for stale vote snapshots, overlapping source recovery, scheduler/read load, cancellation, lease expiry, chat limits, namespace disposal and boundary/outage scheduling. The final41-case service check passes and the scoped independent service review is approved. Client/UI and focused native rail, episode and child checks pass locally. Initial full local suite passed1840, failed5 and deferred299 browser cases; all five failures were corrected, and their62-case focused rerun passes. Syntax and Vite build pass; final integrated suite/rendered verification remain pending.
+
+The executable at `/usr/bin/chromium` cannot start in this runtime: a Unix process-singleton socket is denied. Use hosted Chromium; do not repeat local launch attempts or ask to weaken permissions. The previous native iPad test hang came from awaiting decode on offscreen lazy horizontal posters; the test now waits only for visible images with a bounded condition. This is not a claim of physical iPad frame-rate verification.
+
+No Movie Nights/UI release is live yet. Two integration review findings—local media Retry and cached playback after lost admission—were reproduced and corrected with3 RED→GREEN regressions; the9-case client/UI set passes. Remaining work: hosted real React screenshots and two-client media sync, visual inspection and correction, independent whole-change review, exact final checkpoint and concrete review delivery. Merge/publication is now authorized after checks and visual review pass; do not merge an incomplete or unverified tree.
 
 ## Active reference alignment correction
 

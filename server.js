@@ -38,6 +38,8 @@ const { createDownloadRouter } = require("./lib/downloads");
 const { createAccountStore } = require("./lib/account-store");
 const { createConnect } = require("./lib/connect");
 const { createCommunityController } = require("./lib/community");
+const {createMovieNights}=require('./lib/movie-nights');
+const {movieNightsMarkup}=require('./ui/movie-nights');
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
 const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
@@ -5704,7 +5706,7 @@ app.use(siteGate.protect);
 const kids = createKids({
   tmdb:(...args)=>tmdb(...args), secret:process.env.SWIFLY_KIDS_SECRET||process.env.SWIFLY_ACCESS_SECRET,
   onLock:deviceId=>{
-    for(const namespace of [io.sockets,io.of('/study')])for(const socket of namespace.sockets.values())
+    for(const namespace of [io.sockets,io.of('/study'),io.of('/movie-nights')])for(const socket of namespace.sockets.values())
       if(kids.deviceForHeader(socket.handshake.headers.cookie)===deviceId)socket.disconnect(true);
   }
 });
@@ -5736,12 +5738,40 @@ const connect = createConnect({
   }
 });
 app.use("/api/connect", connect.router);
+const movieNights=createMovieNights({
+  store:accountStore,tmdb:(...args)=>tmdb(...args),authenticate:req=>connect.identity(req),io,
+  authorizeSocket:socket=>siteGate.validCookie(socket.handshake.headers.cookie)&&kids.socketAllowed(socket),
+  autoStart:process.env.SWIFLY_MOVIE_NIGHTS_AUTOSTART!=='false',
+  schedule:{timeZone:process.env.SWIFLY_MOVIE_NIGHTS_TIMEZONE||'America/New_York',hour:Number(process.env.SWIFLY_MOVIE_NIGHTS_HOUR||20),days:String(process.env.SWIFLY_MOVIE_NIGHTS_DAYS||'5,6').split(',').map(Number)},
+  resolveSource:(...args)=>resolveMovieNightSource(...args)
+});
+async function resolveMovieNightSource(id,{signal}={}){
+    const result=await fetchProxyVideoSourceRaw({type:'movie',id:String(id),signal});
+    const fields=['status','playbackUrl','proxyVideo','m3u8','hlsProxyUrl','hlsProxyStatusUrl','apiProxyUrl','streamType','streamQuality','streamName','streamMode','audioLanguage','isLiveM3u8','hlsProxyId'];
+    const source=Object.fromEntries(fields.filter(key=>result[key]!==undefined).map(key=>[key,result[key]]));
+    const publicRows=(rows,allowed)=>Array.isArray(rows)?rows.slice(0,40).map(row=>Object.fromEntries(allowed.filter(key=>['string','number','boolean'].includes(typeof row?.[key])).map(key=>[key,row[key]]))):[];
+    source.playbackSources=publicRows(result.playbackSources,['url','src','file','playbackUrl','proxyVideo','m3u8','hlsProxyUrl','streamType','streamQuality','streamName','quality','label','type','name','id']);
+    source.subtitles=publicRows(result.subtitles,['url','src','file','label','lang','language','srclang','type','kind','format','default']);
+    const expiry=hlsProxySources.get(String(result.hlsProxyId||''))?.expiresAt;if(Number.isFinite(expiry)&&expiry>Date.now())source.expiresAt=expiry;
+    return source;
+}
+app.use('/api/movie-nights',movieNights.router);
+app.use('/assets/community',express.static(path.join(__dirname,'public','community'),{maxAge:'1d',dotfiles:'deny',index:false}));
+const movieNightPlayer=event=>event?.winner?playerMarkup({id:event.winner.id,type:'movie',title:event.winner.title,year:event.winner.year,poster:event.winner.poster,backdrop:event.winner.backdrop,embedded:true,managed:true,videoId:'svMovieNightPlayer'}):'';
+app.get('/api/movie-nights/:id/player',async(req,res)=>{
+  try{const state=await movieNights.snapshot(req,req.params.id);if(!state.event?.winner)return res.status(409).json({message:'The community is still choosing the film.'});res.set('Cache-Control','private, no-store').json({html:movieNightPlayer(state.event)});}
+  catch(error){res.status(error.status||503).json({message:error.message||'The player could not load. Try again shortly.'});}
+});
+app.get(['/movie-nights','/movie-night/:id'],async(req,res)=>{
+  let state;try{state=await movieNights.snapshot(req,req.params.id);if(state.code)res.status(503);}catch(error){res.status(error.status||503);state={event:null,upcoming:[],code:error.code,message:error.message};}
+  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event)}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=1"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=273"></script><script defer src="/assets/community/movie-nights.js?v=1"></script>'}));
+});
 app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
 app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
 const trakt=createTrakt({store:accountStore,authenticate:connect.identity,tmdb:(...args)=>tmdb(...args)});
 app.use('/api/trakt',trakt.router);
 app.get('/settings',(req,res)=>res.send(pageShell({title:SITE_NAME+' — Settings',active:'settings',body:settingsMarkup(),extraHead:'<link rel="stylesheet" href="/assets/clean/settings.css?v=262">'})));
-httpServer.once('close',()=>{study.close();trakt.close?.();});
+httpServer.once('close',()=>{study.close();trakt.close?.();movieNights.close();});
 const discovery = createDiscovery({tmdb:(...args) => tmdb(...args)});
 app.use("/api/discovery", discovery.router);
 const playerAssist = createPlayerAssist({tmdb:(...args) => tmdb(...args)});
@@ -6594,7 +6624,7 @@ function kidsPageShell({title,description,body,active,extraHead,player,status}){
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="theme-color" content="#000000"><meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=181"><link rel="preconnect" href="https://image.tmdb.org"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
     ${tvHead()}${studioHead()}${loadingHead({artwork:true,bundled:true})}${navigationHead()}<link rel="stylesheet" href="/assets/clean/base.css?v=262"><link rel="stylesheet" href="/assets/clean/navigation.css?v=2">${shellStyleLink('core')}${shellStyleLink(player?'player':'catalog')}${player?'<link rel="stylesheet" href="/assets/player/player.css?v=272">':''}${shellStyleLink('finish')}
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/liquid-glass/surfaces.js?v=280"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/kids/kids.js?v=3"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/liquid-glass/surfaces.js?v=281"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/kids/kids.js?v=3"></script>
     ${player?'<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=273"></script><script defer src="/assets/player/waves.js?v=6"></script>':''}${extraHead||''}
     </head><body class="svCleanShell svKidsShell">${kidsAccessibilityPrime()}${loadingMarkup()}${navigation.header}<div class="svBrowseScene" data-sv-browse-scene>${body}<footer class="footer kidsNativeFooter"><div class="container"><strong>SwiflyTV Kids</strong><span>Movies: G & PG · Series: TV-Y, TV-Y7 & TV-G</span><a href="/kids/browse">Browse verified titles</a></div></footer></div>${navigation.mobile}${tvAssetScript()}</body></html>`;
 }
@@ -6675,11 +6705,11 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player || partyBrowse || active === "social" || active === "study" ? '<script defer src="/socket.io/socket.io.js"></script>' : ""}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" />
     ${shellStyleLink("core")}
-    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/clean.js?v=268"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/account-sheet.js?v=1"></script><script defer src="/assets/clean/account-data.js?v=2"></script><script defer src="/assets/clean/account.js?v=263"></script><script defer src="/assets/clean/library-state.js?v=277"></script><script defer src="/assets/clean/settings.js?v=262"></script><script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script><script defer src="/assets/clean/avatars.js?v=209"></script>
+    <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/clean.js?v=268"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/account-sheet.js?v=1"></script><script defer src="/assets/clean/account-data.js?v=2"></script><script defer src="/assets/clean/account.js?v=263"></script><script defer src="/assets/clean/library-state.js?v=278"></script><script defer src="/assets/clean/settings.js?v=262"></script><script defer src="/assets/connect/icons.js?v=1"></script><script defer src="/assets/connect/connect.js?v=5"></script><script defer src="/assets/clean/avatars.js?v=209"></script>
     ${active === "profiles" ? '<script defer src="/assets/clean/profiles.js?v=209"></script>' : ""}
     <script defer src="/assets/clean/continue.js?v=262"></script>
     ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
-    <script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/clean/episode-browser.js?v=3"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=280"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
+    <script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/clean/episode-browser.js?v=4"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=281"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
     ${active === "login" || active === "signup" ? '<link rel="stylesheet" href="/assets/clean/auth.css?v=262" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=273"></script>' : ""}
@@ -6766,6 +6796,7 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
             <a href="/recommendations"><span>${cleanIcon("compass")}</span><b>AI picks</b></a>
             <a href="/audiobooks"><span>${cleanIcon("film")}</span><b>Audiobooks</b></a>
             <a href="/social?tab=watchrooms"><span>${cleanIcon("tv")}</span><b>Watch parties</b></a>
+ <a href="/movie-nights"><span>◒</span><b>Movie Nights</b></a>
             <a href="/browse-by-languages"><span>${cleanIcon("compass")}</span><b>Languages & genres</b></a>
             <a href="/kids"><span>${cleanIcon("user")}</span><b>Kids</b></a>
           </div>
@@ -7831,9 +7862,11 @@ async function welcomePage(req, res) {
 
 async function homePage(req, res) {
   const period=moviePeriod(req.query?.moviePeriod),popularity=moviePeriodQuery(period);
+  const movieTrending=moviePeriod(req.query?.trendingMovies),seriesTrending=moviePeriod(req.query?.trendingSeries);
+  const movieTrendQuery=moviePeriodQuery(movieTrending),seriesTrendQuery=moviePeriodQuery(seriesTrending,{type:'tv'});
   const [trendingMovies, trendingTv, popularMovies, popularTv, topMovies, topTv, nowPlaying, featured] = await Promise.all([
-    tmdb("/trending/movie/week", {}, CACHE_TTL.short),
-    tmdb("/trending/tv/week", {}, CACHE_TTL.short),
+    tmdb(movieTrendQuery.endpoint, movieTrendQuery.params, CACHE_TTL.short),
+    tmdb(seriesTrendQuery.endpoint, seriesTrendQuery.params, CACHE_TTL.short),
     tmdb(popularity.endpoint,popularity.params,CACHE_TTL.medium),
     tmdb("/tv/popular", {}, CACHE_TTL.medium),
     tmdb("/movie/top_rated", {}, CACHE_TTL.medium),
@@ -7846,8 +7879,8 @@ async function homePage(req, res) {
   const featuredMovies = await homeFeaturedPresentation(homeFeaturedMovies([featured, ...(trendingMovies.results || []), ...(popularMovies.results || []), ...(nowPlaying.results || []), ...(topMovies.results || [])]), featured?.id);
   const hero = featuredMovies[0] || featured || pickHero([...(trendingMovies.results || []), ...(popularMovies.results || []), ...(trendingTv.results || []).map(item => ({ ...item, media_type: "tv" }))]);
   const rows=diverseRows([
-    {title:'Trending movies this week',type:'movie',items:trendingMovies.results||[],href:'/trending?type=movie&period=week',key:'trending-movies'},
-    {title:'Trending series this week',type:'tv',items:trendingTv.results||[],href:'/trending?type=tv&period=week',key:'trending-tv'},
+    {title:'Trending Movies',type:'movie',items:trendingMovies.results||[],href:'/trending?type=movie&period='+movieTrending,key:'trending-movies',period:{base:'/?trendingSeries='+seriesTrending+'&moviePeriod='+period,parameter:'trendingMovies',selected:movieTrending,type:'movie',refresh:true}},
+    {title:'Trending Series',type:'tv',items:trendingTv.results||[],href:'/trending?type=tv&period='+seriesTrending,key:'trending-tv',period:{base:'/?trendingMovies='+movieTrending+'&moviePeriod='+period,parameter:'trendingSeries',selected:seriesTrending,type:'tv',refresh:true}},
     {title:periodDefinitions[period].title,type:'movie',items:popularMovies.results||[],href:'/movies?period='+period,key:'popular-movies'},
     {title:'Popular series',type:'tv',items:popularTv.results||[],href:'/tv',key:'popular-tv'},
     {title:'Top rated movies',type:'movie',items:topMovies.results||[],href:'/movies?sort=top_rated',key:'top-movies'},
@@ -7862,7 +7895,8 @@ async function homePage(req, res) {
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
       </section>
       ${feedHome()}
-      ${rows.map(row=>dsRail(row.title,row.items,row.type,{viewHref:row.href,studioKey:row.key,...(row.key==='popular-movies'?{period:{base:'/',parameter:'moviePeriod',selected:period}}:{})})).join('')}
+      <a class="svMovieNightFeature" href="/movie-nights">${cleanIcon('film')}<span><strong>Movie Nights</strong><span>Choose the feature. Watch together.</span></span><span class="svMovieNightFeatureAction">Explore screenings ${catalogIcon('arrow')}</span></a>
+      ${rows.map(row=>dsRail(row.title,row.items,row.type,{viewHref:row.href,studioKey:row.key,...(row.period?{period:row.period}:row.key==='popular-movies'?{period:{base:'/',parameter:'moviePeriod',selected:period}}:{})})).join('')}
     </section>
   </main>`;
   res.send(pageShell({ title: SITE_NAME, active: "home", body, extraHead:catalogAssets+'<script defer src="/assets/clean/featured.js?v=7"></script>' }));
@@ -8260,7 +8294,7 @@ function dsRail(title, items = [], type = "", options = {}) {
   if (!cards) return "";
   const more = options.viewHref ? `<a class="svRowMore" href="${escapeHtml(options.viewHref)}">View all</a>` : "";
   const header=options.period?periodControls({...options.period,title,inRow:true,viewHref:options.viewHref}):`<div class="svSectionHead"><h2>${escapeHtml(title)}</h2><div class="svSectionActions">${more}</div></div>`;
-  return `<section class="dsRow svCatalogRow"${options.studioKey ? ` data-st-home-section="${escapeHtml(options.studioKey)}"` : ""}>
+  return `<section class="dsRow svCatalogRow"${options.period?.refresh?' data-period-row="'+escapeHtml(type)+'"':''}${options.studioKey ? ` data-st-home-section="${escapeHtml(options.studioKey)}"` : ""}>
     ${header}
     <div class="movieRail dsRail">${cards}</div>
   </section>`;
@@ -8413,16 +8447,21 @@ async function listingPage(req, res, type = "movie", options = {}) {
 }
 
 async function trendingPage(req, res) {
-  const page=pageNumber(req.query.page),type=['movie','tv','all'].includes(req.query.type)?req.query.type:'all',period=req.query.period==='today'?'today':'week',window=period==='today'?'day':'week';
+  const page=pageNumber(req.query.page),type=['movie','tv','all'].includes(req.query.type)?req.query.type:'all',period=moviePeriod(req.query.period),window=period==='today'?'day':'week';
+  const monthFeed=async()=>{
+    const types=type==='all'?['movie','tv']:[type],feeds=await Promise.all(types.map(async kind=>{const query=moviePeriodQuery('month',{page,type:kind}),value=await tmdb(query.endpoint,query.params,CACHE_TTL.short);return{...value,results:(value.results||[]).map(item=>({...item,media_type:kind}))};}));
+    if(feeds.every(feed=>feed.__error))return feeds[0];
+    return{results:feeds.flatMap(feed=>feed.results).sort((a,b)=>Number(b.popularity||0)-Number(a.popularity||0)),total_pages:Math.max(...feeds.map(feed=>Number(feed.total_pages)||1))};
+  };
   const [data,popularMovies,popularTv,upcomingMovies,nowPlaying,topMovies]=await Promise.all([
-    tmdb('/trending/'+type+'/'+window,{page},CACHE_TTL.short),
+    period==='month'?monthFeed():tmdb('/trending/'+type+'/'+window,{page},CACHE_TTL.short),
     ...(page===1?[tmdb('/movie/popular',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/tv/popular',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/movie/upcoming',{page,include_adult:'false'},CACHE_TTL.medium),tmdb('/movie/now_playing',{page,include_adult:'false'},CACHE_TTL.short),tmdb('/movie/top_rated',{page,include_adult:'false'},CACHE_TTL.medium)]:[])
   ]);
   if(data.__error)return res.send(setupNeededPage(data.message));
   const items=uniqueTitles((data.results||[]).filter(item=>['movie','tv'].includes(getType(item))),type==='all'?'':type),hero=page===1?await featuredHero(pickHero(items)):null;
-  const base='/trending?'+new URLSearchParams({type,period}),rowInputs=[{title:'Trending '+(period==='today'?'today':'this week'),items,type:type==='all'?'':type,href:base},...(page===1?[{title:'Popular movies',type:'movie',items:popularMovies.results||[],href:'/movies'},{title:'Series everyone’s talking about',type:'tv',items:popularTv.results||[],href:'/tv'},{title:'On the horizon',type:'movie',items:upcomingMovies.results||[],href:'/movies?sort=upcoming'},{title:'In theaters',type:'movie',items:nowPlaying.results||[],href:'/movies?sort=now_playing'},{title:'All-time favorites',type:'movie',items:topMovies.results||[],href:'/movies?sort=top_rated'}]:[])];
+  const base='/trending?'+new URLSearchParams({type,period}),rowInputs=[{title:period==='month'?'Popular releases this month':'Trending '+(period==='today'?'today':'this week'),items,type:type==='all'?'':type,href:base},...(page===1?[{title:'Popular movies',type:'movie',items:popularMovies.results||[],href:'/movies'},{title:'Series everyone’s talking about',type:'tv',items:popularTv.results||[],href:'/tv'},{title:'On the horizon',type:'movie',items:upcomingMovies.results||[],href:'/movies?sort=upcoming'},{title:'In theaters',type:'movie',items:nowPlaying.results||[],href:'/movies?sort=now_playing'},{title:'All-time favorites',type:'movie',items:topMovies.results||[],href:'/movies?sort=top_rated'}]:[])];
   const rows=diverseRows(rowInputs,{limit:20,exclude:hero?.id?[titleKey(hero)]:[]});
-  const body=`<main class="svCatalogPage">${hero?.id?dsHero({hero,context:'New & Popular',eyebrow:'Find your next favorite'}):''}<section class="dsContent${hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">WHAT’S GETTING PEOPLE TALKING</span><h1>New & popular</h1><p>Follow your curiosity. There’s always another story.</p></div><nav class="svPeriodTabs" aria-label="Trending time window">${[['today','Today'],['week','This week']].map(([value,label])=>'<a href="/trending?'+new URLSearchParams({type,period:value})+'"'+(period===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav></div><nav class="dsTabs svCatalogTypeTabs" aria-label="Trending formats">${[['all','Everything'],['movie','Movies'],['tv','Series']].map(([value,label])=>'<a class="'+(type===value?'active':'')+'" href="/trending?'+new URLSearchParams({type:value,period})+'"'+(type===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav>${page===1?rows.map((row,index)=>(index===2?feedDiscover():'')+dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href})).join(''):`<section class="svCatalogResults"><div class="svCatalogResultsHead"><h2>Trending ${period==='today'?'today':'this week'}</h2><span>Page ${page}</span></div><div class="dsGrid">${items.map(item=>movieCard(item)).join('')}</div>${items.length?'':'<div class="svCatalogEmpty"><h3>You’ve reached a quiet page.</h3><p>Try a different format or return to the first page.</p></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
+  const body=`<main class="svCatalogPage">${hero?.id?dsHero({hero,context:'New & Popular',eyebrow:'Find your next favorite'}):''}<section class="dsContent${hero?.id?'':' noHero'}"><div class="svBrowseHeading"><div><span class="svCatalogEyebrow">WHAT’S GETTING PEOPLE TALKING</span><h1>New & popular</h1><p>Follow your curiosity. There’s always another story.</p></div><nav class="svPeriodTabs" aria-label="Trending time window">${[['today','Today'],['week','This Week'],['month','This Month']].map(([value,label])=>'<a href="/trending?'+new URLSearchParams({type,period:value})+'"'+(period===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav></div><nav class="dsTabs svCatalogTypeTabs" aria-label="Trending formats">${[['all','Everything'],['movie','Movies'],['tv','Series']].map(([value,label])=>'<a class="'+(type===value?'active':'')+'" href="/trending?'+new URLSearchParams({type:value,period})+'"'+(type===value?' aria-current="page"':'')+'>'+label+'</a>').join('')}</nav>${page===1?rows.map((row,index)=>(index===2?feedDiscover():'')+dsRail(row.title,row.items,row.type,{limit:20,viewHref:row.href})).join(''):`<section class="svCatalogResults"><div class="svCatalogResultsHead"><h2>Trending ${period==='today'?'today':period==='month'?'this month':'this week'}</h2><span>Page ${page}</span></div><div class="dsGrid">${items.map(item=>movieCard(item)).join('')}</div>${items.length?'':'<div class="svCatalogEmpty"><h3>You’ve reached a quiet page.</h3><p>Try a different format or return to the first page.</p></div>'}</section>`}${pagination(base,page,data.total_pages)}</section></main>`;
   res.send(pageShell({title:SITE_NAME+' — New & Popular',active:'trending',body,extraHead:catalogAssets}));
 }
 
@@ -9080,14 +9119,14 @@ async function detailPage(req, res, type, options = {}) {
     const total = Math.max(0, Number(season.episode_count || 0));
     const shown = Math.min(total, 24);
     const selected=number===selectedSeason;
-    const episodeData=kidsMode&&selected?await tmdb(`${endpoint}/season/${number}`,{},CACHE_TTL.long).catch(()=>({episodes:[]})):null;
+    const episodeData=selected?await tmdb(`${endpoint}/season/${number}`,{},CACHE_TTL.long).catch(()=>({episodes:[]})):null;
     const episodeRows=new Map((Array.isArray(episodeData?.episodes)?episodeData.episodes:[]).map(row=>[row.episode_number,row]));
-    const episodeLinks = Array.from({ length: kidsMode&&!selected?0:shown }, (_, i) => {
-      const row=episodeRows.get(i+1),still=kidsMode&&/^\/[A-Za-z0-9_.-]+$/.test(row?.still_path||'')?img(row.still_path,'w300'):'';
-      return `<span class="svDetailEpisodeChoice${kidsMode?' svEpisodeBrowserCard':''}"><a class="svDetailEpisodeTile" href="${kidsMode?'/kids':''}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}">${kidsMode?`<span class="svEpisodeBrowserThumbnail">${still?`<img class="svEpisodeBrowserStill" src="${escapeHtml(still)}" alt="" loading="lazy" decoding="async">`:`<span class="svEpisodeThumbnailFallback">${String(i+1).padStart(2,'0')}</span>`}<span class="svEpisodePlaybackBadge">▶</span></span><span class="svEpisodeBrowserCopy"><small>EPISODE ${String(i+1).padStart(2,'0')}</small><strong>${escapeHtml(row?.name||'Episode '+(i+1))}</strong>${row?.overview?`<span class="svEpisodeBrowserPlot">${escapeHtml(row.overview)}</span>`:''}</span>`:`<span class="svEpisodeOrdinal">${String(i + 1).padStart(2, "0")}</span><span>Episode ${i + 1}</span>${cleanIcon("play")}`}</a>${kidsMode?'':`<a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a>`}</span>`;
+    const episodeLinks = Array.from({ length: !selected?0:shown }, (_, i) => {
+      const row=episodeRows.get(i+1),still=/^\/[A-Za-z0-9_.-]+$/.test(row?.still_path||'')?img(row.still_path,'w300'):'';
+      return `<span class="svDetailEpisodeChoice svEpisodeBrowserCard"><a class="svDetailEpisodeTile" href="${kidsMode?'/kids':''}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${i + 1}" aria-label="Watch season ${number} episode ${i + 1}">${`<span class="svEpisodeBrowserThumbnail">${still?`<img class="svEpisodeBrowserStill" src="${escapeHtml(still)}" alt="" loading="lazy" decoding="async">`:`<span class="svEpisodeThumbnailFallback">${String(i+1).padStart(2,'0')}</span>`}<span class="svEpisodePlaybackBadge">▶</span></span><span class="svEpisodeBrowserCopy"><small>EPISODE ${String(i+1).padStart(2,'0')}</small><strong>${escapeHtml(row?.name||'Episode '+(i+1))}</strong>${row?.overview?`<span class="svEpisodeBrowserPlot">${escapeHtml(row.overview)}</span>`:''}</span>`}</a>${kidsMode?'':`<a class="svDetailEpisodeDownload" href="/download/tv/${encodeURIComponent(id)}?s=${number}&e=${i + 1}" data-sv-download data-sv-download-type="episode" aria-label="Download season ${number} episode ${i + 1}" title="Download episode">${cleanIcon("download")}</a>`}</span>`;
     }).join("");
     return `<details class="svSeason" data-episode-show="${escapeHtml(id)}" data-episode-season="${number}"${kidsMode?' data-episode-loaded="true"':''}${(kidsMode?selected:index===0) ? " open" : ""}><summary><span class="svSeasonIdentity"><b class="svSeasonNumber">${String(number).padStart(2, "0")}</b><strong>${escapeHtml(season.name || `Season ${number}`)}</strong></span><span>${total} episodes</span></summary>
-      ${kidsMode&&selected&&(!episodeData||episodeData.__error||!episodeRows.size)?`<p class="svEpisodeBrowserStatus">${total?'Episode details are unavailable. You can still choose an episode below.':'No episodes are available for this season yet.'}</p>`:''}${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips">${kidsMode&&!selected?`<a class="dsSecondaryBtn" href="${seasonHref(number)}">Browse season ${number}</a>`:episodeLinks}${(!kidsMode||selected)&&total > shown ? `<a href="${kidsMode?"/kids":""}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
+      ${kidsMode&&selected&&(!episodeData||episodeData.__error||!episodeRows.size)?`<p class="svEpisodeBrowserStatus">${total?'Episode details are unavailable. You can still choose an episode below.':'No episodes are available for this season yet.'}</p>`:''}${season.overview ? `<p>${escapeHtml(season.overview)}</p>` : ""}<div class="dsEpisodeChips" data-episode-view="rows">${kidsMode&&!selected?`<a class="dsSecondaryBtn" href="${seasonHref(number)}">Browse season ${number}</a>`:episodeLinks}${selected&&total > shown ? `<a href="${kidsMode?"/kids":""}/watch/tv/${encodeURIComponent(id)}?mode=movie&s=${number}&e=${shown + 1}">Continue with episode ${shown + 1}</a>` : ""}</div></details>`;
   }))).join("");
   const about = [
     ["Release year", year], ["Runtime", runtime || "—"], ["Original language", String(details.original_language || "—").toUpperCase()],
@@ -9127,7 +9166,7 @@ async function detailPage(req, res, type, options = {}) {
         <nav class="svDetailChapterNav" aria-label="Title sections"><a href="#overview">The story</a>${castHtml ? '<a href="#cast">Cast</a>' : ""}${seasonHtml ? '<a href="#episodes">Episodes</a>' : ""}${collectionHtml ? '<a href="#collection">Collection</a>' : ""}<a href="#details">Film notes</a></nav>
         <section id="overview" class="svDetailSection svDetailOverview" style="--sv-story-art:url('${escapeHtml(storyArt)}')"><div><span class="svCinemaEyebrow">THE STORY</span><h2>A closer look</h2></div><p>${escapeHtml(details.overview || "No overview available yet.")}</p></section>
         ${castHtml ? `<section id="cast" class="svDetailSection"><h2>Cast</h2><div class="svDetailCastRail" aria-label="Cast">${castHtml}</div></section>` : ""}
-        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserHead"><h2>Episodes</h2>${kidsMode?'':`<div class="svEpisodeBrowserControls"><label>View<select data-episode-view><option value="grid">Grid</option><option value="rows">Row</option></select></label><label>Order<select data-episode-sort><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label></div>`}</div>${seasonHtml}${seasonPager}</section>` : ""}
+        ${seasonHtml ? `<section id="episodes" class="svDetailSection"><div class="svEpisodeBrowserHead"><div class="svEpisodeHeading"><h2>Episodes</h2><p>One more story. Pick up where you left off.</p></div>${kidsMode?'':`<div class="svEpisodeBrowserControls"><label>View<select data-episode-view><option value="grid">Grid</option><option value="rows">List</option></select></label><label>Order<select data-episode-sort><option value="oldest">Oldest first</option><option value="newest">Newest first</option></select></label></div>`}</div>${seasonHtml}${seasonPager}</section>` : ""}
         ${collectionHtml}
         ${more.length ? `<section id="more-like-this" class="svDetailSection"><h2>More like this</h2><div class="svDetailRecommendations">${more.map(item => movieCard(item, type, {kidsMode})).join("")}</div></section>` : ""}
         ${trailers.length ? `<section id="trailers" class="svDetailSection"><h2>Trailers</h2><div class="svDetailTrailers">${trailers.map(video => `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video.key)}" title="${escapeHtml(video.name || title + " trailer")}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`).join("")}</div></section>` : ""}
@@ -13026,6 +13065,21 @@ function watchroomPage(req, res) {
 
 app.get("/welcome", welcomePage);
 app.get("/", homePage);
+app.get('/api/catalog/period-row',async(req,res)=>{
+  res.set('Cache-Control','no-store');
+  const type=req.query.type==='tv'?'tv':'movie',period=moviePeriod(req.query.period),exclude=new Set(String(req.query.exclude||'').split(',').filter(value=>/^[1-9]\d{0,9}$/.test(value)).slice(0,160));
+  const items=[];let failure=false;
+  for(let page=1;page<=3&&items.length<18;page++){
+    const query=moviePeriodQuery(period,{type,page}),data=await tmdb(query.endpoint,query.params,CACHE_TTL.short);
+    if(data.__error){failure=true;break;}
+    for(const item of uniqueTitles(data.results||[],type))if(!exclude.has(String(item.id))&&!items.some(row=>row.id===item.id)){items.push(item);if(items.length===18)break;}
+    if(Number(data.total_pages||1)<=page)break;
+  }
+  if(failure&&!items.length)return res.status(503).json({message:'This row could not refresh. Try again.'});
+  const html=items.map(item=>movieCard(item,type)).join('');
+  const cards=require('./lib/react-document.cjs').compileDocument('<!doctype html><html><head></head><body>'+html+'</body></html>').nodes.filter(node=>typeof node!=='string');
+  res.json({period,html,cards,viewHref:'/trending?'+new URLSearchParams({type,period})});
+});
 app.get("/movies", (req, res) => listingPage(req, res, "movie", { sort: "popular" }));
 app.get("/tv", (req, res) => listingPage(req, res, "tv", { sort: "popular" }));
 app.get("/discover/movie", (req, res) => listingPage(req, res, "movie", { sort: req.query.sort || "discover" }));

@@ -417,3 +417,62 @@ body.svCleanShell[data-st-glass="off"] .svCinemaPage .svDetailAbout > div {
   body.svCleanShell .svCinemaPage .svDetailCastRail .dsCastCard img,
   body.svCleanShell .svCinemaPage .svDetailGenres a {transition:none !important;}
 }
+
+/* Quiet, matte episode browsing. One season and one page of stills at a time. */
+body.svCleanShell .svCinemaPage #episodes{padding-top:28px}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserHead{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:26px}
+.svEpisodeHeading p{margin:9px 0 0;font-size:13px;color:#939393;line-height:1.6}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls label{color:#929292;letter-spacing:0;font-size:11px}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls select{background:#141414;border-color:#ffffff20;color:#eee;border-radius:9px}
+body.svCleanShell .svCinemaPage #episodes .svSeason,
+body.svCleanShell .svCinemaPage #episodes .svSeason[open]{border:1px solid #ffffff15!important;background:#0d0d0d!important;border-radius:14px;overflow:hidden}
+body.svCleanShell .svCinemaPage #episodes .svSeason>summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;min-height:76px;padding:17px 20px;border-radius:0;color:#aaa}
+body.svCleanShell .svCinemaPage #episodes .svSeason>summary:is(:hover,:focus-visible){background:#171717}
+body.svCleanShell .svCinemaPage #episodes .svSeasonNumber{background:#202020;border-color:#ffffff14;color:#d4d4d4;border-radius:9px;width:36px;height:36px;font-size:14px}
+body.svCleanShell .svCinemaPage #episodes .svSeasonIdentity strong{color:#f1f1f1;font-weight:550}
+body.svCleanShell .svCinemaPage #episodes .svSeason>summary>span:last-child{color:#929292}
+.svSeasonProgress{margin-left:auto;color:#858585;font-size:11px;font-weight:400;white-space:nowrap}
+body.svCleanShell .svCinemaPage #episodes .svSeason>p{color:#949494;font-size:12px;max-width:720px}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard{border:1px solid #ffffff16;background:#141414;border-radius:10px;box-shadow:none}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard:is(:hover,:focus-within){background:#1a1a1a;border-color:#ffffff35}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCopy{padding:16px 16px 65px;gap:7px}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCopy>small{color:#929292;font-size:10px;letter-spacing:.08em}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCopy>strong{color:#eee;font-size:15px;font-weight:550}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserMeta{color:#8e8e8e;font-size:11px}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserPlot{color:#aaa;font-size:12px;line-height:1.65}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeThumbnailFallback{background:#202020;color:#8b8b8b;font-size:34px;font-weight:400}
+.svEpisodeActions{position:absolute;right:12px;bottom:11px;display:flex;gap:5px;align-items:center}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard .svEpisodeActions :is(.svDetailEpisodeDownload,.svEpisodeWatched){position:static;display:grid;place-items:center;inset:auto;width:44px;min-width:44px;height:44px;min-height:44px;padding:0!important;border:1px solid #ffffff18!important;border-radius:9px!important;background:#202020!important;color:#aaa;font-size:18px;box-shadow:none!important;cursor:pointer;text-decoration:none;transition:color .16s,background .16s}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserCard .svEpisodeActions :is(a,button):is(:hover,:focus-visible){background:#323232!important;color:#fff}
+body.svCleanShell .svCinemaPage #episodes .svEpisodeWatched[aria-pressed=true]{color:#eee!important;background:#303030!important}
+.svEpisodeProgress{position:absolute;inset:auto 0 0;height:3px;background:#ffffff26;overflow:hidden;pointer-events:none}
+.svEpisodeProgress i{display:block;height:100%;background:var(--st-accent-solid,#e5e5e5)}
+#episodes .svEpisodeBrowserCard .svLibraryWatchedBadge{display:none}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows]{gap:0;padding:0 20px 12px}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserCard{border:0;border-top:1px solid #ffffff10;border-radius:0;background:transparent;min-height:156px;overflow:visible}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserCard:is(:hover,:focus-within){background:#ffffff04}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svDetailEpisodeTile{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);align-items:center;padding:16px 0!important;min-height:156px}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserThumbnail{width:100%;height:auto;min-height:0;aspect-ratio:16/9;border-radius:7px;overflow:hidden;align-self:center}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserCopy{padding:8px 116px 8px 22px;gap:7px}
+body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeActions{right:0;bottom:17px}
+.svEpisodePages{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 20px 20px;color:#888;font-size:12px}
+.svEpisodePages button{min-height:44px;padding:0 15px;border:1px solid #ffffff1a;border-radius:9px;background:#191919;color:#ddd;font:inherit;cursor:pointer}
+.svEpisodePages button:disabled{opacity:.35;cursor:default}
+@media(max-width:680px){
+ body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserHead{gap:20px}
+ .svEpisodeHeading p{font-size:12px}
+ body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls{display:grid;grid-template-columns:2fr 1fr 1.4fr;gap:8px;width:100%}
+ body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls label{min-width:0;font-size:10px}
+ body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls select{padding-left:10px;font-size:11px}
+ body.svCleanShell .svCinemaPage #episodes .svSeason>summary{padding:14px 13px;gap:6px 10px}
+ .svSeasonProgress{font-size:10px}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows]{padding:0 12px 6px}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svDetailEpisodeTile{grid-template-columns:104px minmax(0,1fr);align-items:start;min-height:144px;padding:14px 0!important}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserThumbnail{align-self:start}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserCopy{padding:0 0 45px 13px;gap:5px}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserCopy>strong{font-size:13px;line-height:1.4}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeBrowserPlot{display:none}
+ body.svCleanShell .svCinemaPage #episodes .dsEpisodeChips[data-episode-view=rows] .svEpisodeActions{bottom:10px;right:0}
+ .svEpisodePages{padding:10px 12px 16px;font-size:11px}
+}
+@media(max-width:360px){.svSeasonProgress{flex-basis:100%;margin-left:46px}body.svCleanShell .svCinemaPage #episodes .svEpisodeBrowserControls{grid-template-columns:1fr 1fr}body.svCleanShell .svCinemaPage #episodes .svEpisodeSeasonSelect{grid-column:1/-1}}

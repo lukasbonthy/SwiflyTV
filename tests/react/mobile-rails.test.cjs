@@ -33,6 +33,15 @@ test('phone rails keep the same poster nodes throughout native swiping',async()=
     assert.equal(f.rail.scrollLeft,10*406/2,'Virtualization must not reset native scroll position');
   }finally{await f.close();}
 });
+test('a period replacement is owned by React and resets only its rail to the new first page',async()=>{
+ const f=await fixture(1280);try{
+  const section=f.rail.closest('section'),heading=section.querySelector('h2');await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());
+  const cards=Array.from({length:9},(_,i)=>({tag:'article',attrs:{class:'movieCard'},children:[{tag:'a',attrs:{href:'/movie/'+(100+i),class:'posterWrap'},children:['New '+i]}]}));
+  await React.act(async()=>{const event=new f.w.CustomEvent('swifly:rail-replace',{cancelable:true,bubbles:true,detail:{cards}});f.rail.dispatchEvent(event);assert(event.defaultPrevented);});
+  assert.equal(section.querySelector('h2'),heading);assert.match(f.rail.textContent,/New 0/);assert.equal(f.rail.querySelectorAll('.movieCard').length,7);assert.equal(f.rail.getAttribute('aria-label'),'Titles 1 to 7 of 9');
+  await React.act(async()=>f.w.document.querySelector('[aria-label="Next titles"]').click());assert.match(f.rail.textContent,/New 8/);
+ }finally{await f.close();}
+});
 
 test('phone arrows scroll smoothly and every title remains reachable',async()=>{
   const f=await fixture();try{
