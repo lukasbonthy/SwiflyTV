@@ -31,9 +31,45 @@ test.after(async()=>{await browser?.close();api?.movieNights.close();if(api)awai
 async function open(t,width=1440,height=1050,route='/movie-night/'+voteId){const context=await browser.newContext({viewport:{width,height},reducedMotion:'no-preference',colorScheme:'dark'});t.after(()=>context.close());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route('https://image.tmdb.org/**',route=>{const index=Number(/native-(\d)/.exec(route.request().url())?.[1]||0);return route.fulfill({contentType:'image/jpeg',headers:{'Access-Control-Allow-Origin':'*'},body:fs.readFileSync(path.join(fixtureRoot,'poster-'+index+'.jpg'))});});await page.route('https://fonts.googleapis.com/**',route=>route.fulfill({contentType:'text/css',body:''}));await page.route('https://fonts.gstatic.com/**',route=>route.fulfill({body:''}));await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:''}));await page.goto(origin+route);await page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading')&&window.SwiflyMovieNights?.active);return{context,page,errors};}
 async function shot(page,name){const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'movie-nights-'+name+'.png'),fullPage:true,animations:'disabled'});}}
 async function fits(page,scope='.svNightPage'){const issues=await page.evaluate(scope=>{const outside=[];for(const n of document.querySelectorAll(`${scope} :is(button,input,a)`)){if(n.closest('[hidden],template')||n.closest('.svPlayerStatus[hidden],.svPlayerPopover:not([open])'))continue;const r=n.getBoundingClientRect(),s=getComputedStyle(n);if(!r.width||!r.height||s.visibility==='hidden')continue;if(r.left<-.5||r.right>innerWidth+.5)outside.push({text:n.textContent,box:r.toJSON()});}return{overflow:document.documentElement.scrollWidth>innerWidth,outside};},scope);assert.equal(issues.overflow,false,JSON.stringify(issues));assert.deepEqual(issues.outside,[]);}
+async function stageFrame(page,label){
+ const frame=await page.locator('[data-night-stage]').boundingBox();
+ assert(frame&&Math.abs(frame.height-frame.width*9/16)<2,JSON.stringify({label,frame}));
+ return frame;
+}
 for(const [name,width,height]of [['desktop',1440,1050],['ipad',834,1112],['phone',390,844],['small-phone',320,800]])test('real Movie Nights ballot and chat fit '+name,{skip:!available,timeout:90000},async t=>{
- const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await shot(f.page,name+'-voting');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);
- if(!await f.page.locator('[data-night-chat-body]').isVisible()){await f.page.locator('[data-night-chat-toggle]').click();assert(await f.page.locator('[data-night-chat-body]').isVisible());}await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
+ const {page,errors}=await open(t,width,height);
+ const votes=page.locator('[data-night-vote]');
+ await votes.first().waitFor();
+ assert.equal(await votes.count(),6);
+ assert.equal(await page.locator('[data-night-total-votes]').textContent(),'0');
+ const stage=await stageFrame(page,name+' voting');
+ const chat=await page.locator('[data-night-chat]').boundingBox();
+ const ballot=await page.locator('.nightBallot').boundingBox();
+ const layout=JSON.stringify({name,stage,chat,ballot});
+ assert(chat&&ballot&&chat.y+chat.height<=ballot.y+.5,layout);
+ if(name==='desktop')assert(chat.x>=stage.x+stage.width-.5&&chat.y<stage.y+stage.height,layout);
+ else assert(chat.y>=stage.y+stage.height-.5,layout);
+
+ const chatBody=page.locator('[data-night-chat-body]');
+ const chatToggle=page.locator('[data-night-chat-toggle]');
+ if(width<=390){
+  assert.equal(await chatBody.isVisible(),false);
+  assert.equal(await chatToggle.getAttribute('aria-expanded'),'false');
+ }
+ await shot(page,name+'-voting');
+ await votes.first().click();
+ await page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();
+ await fits(page);
+
+ if(!await chatBody.isVisible())await chatToggle.click();
+ assert(await chatBody.isVisible());
+ assert.equal(await chatToggle.getAttribute('aria-expanded'),'true');
+ await chatToggle.click();
+ assert.equal(await chatBody.isVisible(),false);
+ assert.equal(await chatToggle.getAttribute('aria-expanded'),'false');
+ await fits(page);
+ await shot(page,name+'-chat-collapsed');
+ assert.deepEqual(errors,[]);
 });
 async function waitForNightPlayback(page, label){
  try{
@@ -60,9 +96,21 @@ async function waitForNightPlayback(page, label){
   throw new Error(label+' playback not active: '+JSON.stringify(details)+' | '+error.message);
  }
 }
+async function joinLiveStage(page,label){
+ await page.locator('[data-night-lobby]').waitFor({state:'visible'});
+ assert(await page.locator('[data-night-chat-body]').isVisible(),label+' starts with live chat expanded');
+ assert.equal(await page.locator('[data-night-chat-toggle]').getAttribute('aria-expanded'),'true');
+ const before=await stageFrame(page,label+' lobby');
+ await page.locator('[data-night-join]').click();
+ await waitForNightPlayback(page,label);
+ await page.locator('[data-night-lobby]').waitFor({state:'hidden'});
+ const after=await stageFrame(page,label+' playing');
+ assert(Math.abs(before.width-after.width)<1&&Math.abs(before.height-after.height)<1,JSON.stringify({label,before,after}));
+ assert(await page.locator('[data-night-presence]').isVisible(),label+' shows the viewer count while playing');
+}
 test('two actual native players share one source and recover a personal pause and reconnect',{skip:!available,timeout:120000},async t=>{
- const first=await open(t,1440,1050,'/movie-night/'+liveId);await first.page.locator('[data-night-join]').click();await waitForNightPlayback(first.page,'first viewer');
- const second=await open(t,390,844,'/movie-night/'+liveId);await second.page.locator('[data-night-join]').click();await waitForNightPlayback(second.page,'second viewer');
+ const first=await open(t,1440,1050,'/movie-night/'+liveId);await joinLiveStage(first.page,'desktop viewer');
+ const second=await open(t,390,844,'/movie-night/'+liveId);await joinLiveStage(second.page,'390 px viewer');
  const clocks=await Promise.all([first.page,second.page].map(page=>page.evaluate(()=>({time:document.querySelector('video').currentTime,source:document.querySelector('video').currentSrc,ready:document.querySelector('video').readyState}))));assert(Math.abs(clocks[0].time-clocks[1].time)<1.5,JSON.stringify(clocks));assert.equal(clocks[0].source,clocks[1].source);await fits(first.page);await fits(second.page);await shot(first.page,'desktop-live');await shot(second.page,'phone-live');
  await second.page.locator('[data-player-stage]').hover();await second.page.locator('[data-player-play]').click();assert(await second.page.locator('[data-night-live]').isVisible());const before=await first.page.locator('video').evaluate(v=>({time:v.currentTime,paused:v.paused}));assert.equal(before.paused,false);await second.page.locator('[data-night-live]').click();await second.page.waitForFunction(()=>!document.querySelector('video').paused);assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<1.5);
  await second.context.setOffline(true);
@@ -76,7 +124,12 @@ test('two actual native players share one source and recover a personal pause an
  });
  await second.context.setOffline(false);
  await second.page.evaluate(()=>window.dispatchEvent(new Event('online')));
- await waitForNightPlayback(second.page,'viewer after reconnect');assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<2);assert.deepEqual([...first.errors,...second.errors],[]);
+ await waitForNightPlayback(second.page,'viewer after reconnect');assert(Math.abs((await first.page.locator('video').evaluate(v=>v.currentTime))-(await second.page.locator('video').evaluate(v=>v.currentTime)))<2);
+ const smallest=await open(t,320,800,'/movie-night/'+liveId);
+ await joinLiveStage(smallest.page,'320 px viewer');
+ await fits(smallest.page);
+ await shot(smallest.page,'small-phone-live');
+ assert.deepEqual([...first.errors,...second.errors,...smallest.errors],[]);
 });
 test('shared source failure keeps its selected movie and a useful retry state',{skip:!available,timeout:90000},async t=>{const f=await open(t,390,844,'/movie-night/'+errorId);await f.page.locator('[data-night-status]').filter({hasText:/source could not load/}).waitFor();assert.equal(await f.page.locator('[data-night-feature-title]').textContent(),films[1].title);assert.equal(await f.page.locator('[data-night-join]').isDisabled(),true);await fits(f.page);await shot(f.page,'phone-source-error');assert.deepEqual(f.errors,[]);});
 test('a real account changes its ballot once and sends safely rendered persistent chat',{skip:!available,timeout:90000},async t=>{
@@ -171,12 +224,9 @@ test('Home keeps the original poster visible during a storage outage',{skip:!ava
 test('the screening stage and account dialog fit desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
-  const stage=await f.page.locator('[data-night-stage]').boundingBox();
+  const stage=await stageFrame(f.page,label+' stage');
   const heading=await f.page.locator('.nightPageTop h1').boundingBox();
-  assert(stage&&heading&&stage.width>250&&stage.x>=0&&stage.x+stage.width<=width+.5&&stage.y>heading.y&&stage.y<height/2,JSON.stringify({label,stage,heading}));
-  const badges=await f.page.locator('.nightStageTop').boundingBox();
-  const feature=await f.page.locator('[data-night-feature-label]').boundingBox();
-  assert(badges&&feature&&feature.y>=badges.y+badges.height+8,JSON.stringify({label,badges,feature}));
+  assert(heading&&stage.width>250&&stage.x>=0&&stage.x+stage.width<=width+.5&&stage.y>heading.y&&stage.y<height/2,JSON.stringify({label,stage,heading}));
   await f.page.locator('[data-night-auth-open="signup"]').click();
   await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
   assert.equal(await f.page.locator('.topbar').isVisible(),false);

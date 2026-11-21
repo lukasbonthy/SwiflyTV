@@ -1,102 +1,117 @@
-/* Movie Nights uses SwiflyTV's regular dark surfaces and media controls. */
+/* Screening room surfaces share SwiflyTV's dark palette and native video controls. */
 .svNightPage {
-  --night-accent: var(--st-accent-solid, #22d3ee);
-  --night-border: #ffffff1c;
-  color: #f3f4f5;
+  --night-accent: var(--st-accent-solid, #77dff0);
+  --night-border: #ffffff20;
+  --night-panel: #12161e;
+  --night-text-muted: #aeb8c7;
+  color: #f4f6fa;
   color-scheme: dark;
 }
 body.svCleanShell .svNightPage {
-  width: min(1440px, calc(100% - 72px));
+  width: min(1380px, calc(100% - 64px));
   margin: 0 auto;
-  padding: 116px 0 96px;
+  padding: 104px 0 108px;
 }
 .svNightPage [hidden] { display: none !important; }
 .svNightPage :is(a, button, input):focus-visible,
-.svMovieNightFeature a:focus-visible { outline: 2px solid var(--night-accent); outline-offset: 4px; }
+.svMovieNightFeature a:focus-visible { outline: 2px solid var(--night-accent); outline-offset: 3px; }
 .svNightPage svg, .svMovieNightFeature svg { width: 17px; height: 17px; flex: none; }
 .svNightPage a { color: inherit; text-decoration: none; }
 .svNightPage button { cursor: pointer; }
 .svNightPage button:disabled { cursor: default; }
 .svNightPage .svNavMatchedLens { display: none !important; }
 
-.nightPageTop { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 24px; }
-.nightBreadcrumb { display: flex; align-items: center; gap: 9px; font-size: 12px; margin-bottom: 12px; color: #a9aeb7; }
+.nightPageTop { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 20px; margin-bottom: 18px; }
+.nightBreadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; color: var(--night-text-muted); font-size: 12px; }
 .nightBreadcrumb a:hover { color: #fff; }
-.nightPageTop h1 { margin: 0; color: inherit; font-size: clamp(29px, 3.1vw, 42px); font-weight: 600; letter-spacing: -.045em; line-height: 1.12; }
-.nightPageTop p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: #a5aab4; }
-.nightHeaderActions, .nightLobbyActions, .nightScreeningActions { display: flex; align-items: center; gap: 8px; }
-.nightHeaderActions { flex: none; }
+.nightPageTop h1 { margin: 0; color: inherit; font-size: clamp(30px, 3.3vw, 44px); font-weight: 650; letter-spacing: -.05em; line-height: 1.06; }
+.nightHeaderActions, .nightScreeningActions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .nightBackLink, .nightTextButton, .nightBallotSignin {
   display: inline-flex; align-items: center; gap: 7px; min-height: 44px;
-  padding: 0 6px; color: #b5bac4 !important; background: none; border: 0; font: inherit; font-size: 13px;
+  padding: 0 5px; color: var(--night-text-muted) !important; background: none; border: 0; font: inherit; font-size: 13px;
 }
 .nightBackLink:hover, .nightTextButton:hover, .nightBallotSignin:hover { color: #fff !important; }
+.nightButton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 13px;
+  background: #202631; border: 1px solid #ffffff21; border-radius: 9px; color: #ecf0f8; font: inherit;
+  font-size: 13px; font-weight: 550; line-height: 1.3; white-space: nowrap;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+.nightButton:hover { background: #2d3747; border-color: #ffffff40; }
+.nightButtonPrimary, .svNightPage:not([data-night-phase-state="voting"]) [data-night-join] {
+  background: #e9eef7; color: #111722 !important; border-color: transparent;
+}
+.nightButtonPrimary:hover, .svNightPage:not([data-night-phase-state="voting"]) [data-night-join]:hover { background: #fff; }
+.nightIconButton { width: 44px; padding: 0; }
 
 .nightScreeningGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 310px);
+  grid-template-columns: minmax(0, 1fr) clamp(252px, 24%, 324px);
   grid-template-areas: "broadcast chat" "ballot ballot";
-  gap: 28px 20px;
+  gap: 27px 16px;
   align-items: start;
 }
-.nightBroadcast { grid-area: broadcast; min-width: 0; }
+.nightBroadcast, .nightChat { min-width: 0; border: 1px solid var(--night-border); border-radius: 16px; background: var(--night-panel); }
+.nightBroadcast { grid-area: broadcast; }
 .nightStage {
   position: relative; isolation: isolate; width: 100%; aspect-ratio: 16 / 9; overflow: clip;
-  border: 1px solid var(--night-border); border-radius: 16px; background: #101318;
+  border-radius: 15px 15px 0 0; background: #0a0d13;
 }
-[data-night-phase-state="unavailable"] .nightStage:not(:has(.nightFeatureArt)) {
-  aspect-ratio: auto; min-height: clamp(250px, 35vw, 370px);
+.nightLobby { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 80% 0, #22314b, transparent 72%); }
+.nightFeatureArt, .nightCoverArt { position: absolute; height: 100%; object-fit: cover; }
+.nightFeatureArt { inset: 0; width: 100%; object-position: center 42%; }
+.nightCoverArt {
+  top: 0; right: 0; width: 64%; opacity: .68; object-position: center 46%;
+  mask-image: linear-gradient(90deg, transparent, #000 38%);
 }
-.nightLobby { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 82% 0, #202e3d, transparent 65%); }
-.nightFeatureArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 38%; }
+.nightLobby:has(.nightFeatureArt:not([hidden])) .nightCoverArt { display: none; }
 .nightStageShade {
   position: absolute; inset: 0;
-  background: linear-gradient(0deg, #090b10f5, #090b10a8 25%, #090b1000 67%),
-    linear-gradient(90deg, #090b1073, transparent 80%), linear-gradient(#090b1066, transparent 26%);
+  background: linear-gradient(0deg, #070a10f5, #070a10a6 25%, #070a1000 59%),
+    linear-gradient(90deg, #06081060, transparent 60%), linear-gradient(#070a1060, transparent 25%);
 }
-.nightStageTop { position: absolute; inset: 20px 22px auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.nightPhase, .nightPresence {
-  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; min-height: 28px;
-  background: #12161d; border: 1px solid #ffffff22; border-radius: 8px; color: #eaedf2; font-size: 12px; font-weight: 550;
+.nightStageTop { position: absolute; top: clamp(10px, 1.7vw, 23px); left: clamp(12px, 2vw, 28px); }
+.nightPhase {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 29px; padding: 4px 10px;
+  background: #0b1019ed; border: 1px solid #ffffff2a; border-radius: 8px; color: #edf3fc; font-size: 12px; font-weight: 630;
 }
 .nightPhase::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--night-accent); }
-[data-night-phase-state="live"] .nightPhase::before { background: #fb6e79; }
+[data-night-phase-state="live"] .nightPhase::before { background: #ff728a; }
 [data-night-phase-state="unavailable"] .nightPhase::before,
-[data-night-phase-state="ended"] .nightPhase::before { background: #949ba6; }
-.nightPresence svg { width: 15px; height: 15px; }
-
-.nightLobbyCopy { position: absolute; inset: auto 26px 24px; }
-.nightEyebrow { display: block; color: #c8ced8; font-size: 10px; font-weight: 650; letter-spacing: .095em; }
+[data-night-phase-state="ended"] .nightPhase::before { background: #a3afbf; }
+.nightLobbyCopy { position: absolute; inset: auto clamp(12px, 2vw, 28px) clamp(12px, 2vw, 28px); }
+.nightEyebrow { display: block; color: #d6e1ef; font-size: 10px; font-weight: 650; letter-spacing: .105em; }
 .nightLobbyCopy h2 {
-  margin: 6px 0 0; color: #fff; max-width: 22ch; font-size: clamp(29px, 4vw, 56px);
-  font-weight: 600; line-height: 1.06; letter-spacing: -.045em; text-wrap: balance; overflow-wrap: anywhere;
+  margin: 5px 0 0; color: #fff; max-width: 23ch; font-size: clamp(25px, 4vw, 59px);
+  font-weight: 670; line-height: 1.03; letter-spacing: -.048em; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
-.nightLobbyCopy p { color: #c1c7d2; font-size: 13px; margin: 9px 0 0; }
+.nightLobbyCopy p { margin: 6px 0 0; color: #d2dbe8; font-size: 13px; }
 .nightLobbyCopy p:empty { display: none; }
-.nightLobbyBottom { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-top: 18px; }
-.nightStart { min-width: 0; color: #b9c1cf; font-size: 12px; line-height: 1.45; }
-.nightStart > span { display: flex; align-items: center; gap: 7px; }
-.nightStart svg { width: 15px; height: 15px; }
-.nightStart strong { display: block; margin-top: 4px; color: #f2f5fa; font-size: 13px; font-weight: 550; font-variant-numeric: tabular-nums; }
-.nightStart strong:empty { display: none; }
-.nightButton {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 14px;
-  background: #1b1e24; border: 1px solid #ffffff26; border-radius: 10px; color: #edeff2; font: inherit;
-  font-size: 13px; line-height: 1.4; white-space: nowrap; transition: background .18s ease, border-color .18s ease, color .18s ease;
+
+.nightBroadcastInfo {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 18px;
+  min-width: 0; padding: 13px 16px; border-top: 1px solid var(--night-border);
 }
-.nightButton:hover { background: #2a303b; border-color: #ffffff48; }
-.nightButtonPrimary, .svNightPage:not([data-night-phase-state="voting"]) [data-night-join] { background: #f2f3f5; color: #101318 !important; font-weight: 600; border-color: transparent; }
-.nightButtonPrimary:hover { background: #fff; }
-.nightIconButton { width: 44px; padding: 0; }
-.nightBroadcastInfo { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
-.nightEventLine, .nightOnAir { display: flex; align-items: center; gap: 8px; color: #b0b5bf; font-size: 12px; }
-.nightOnAir { color: #ffa1a7; font-size: 11px; font-weight: 650; }
-.nightOnAir i { width: 6px; height: 6px; background: #ff707f; border-radius: 50%; }
-.nightBroadcastInfo h2 { margin: 6px 0 4px; font-size: 24px; line-height: 1.2; letter-spacing: -.025em; font-weight: 600; }
-.nightBroadcastInfo p, .nightStatus, .nightComposeStatus { color: #aeb4c0; font-size: 13px; line-height: 1.55; margin: 0; }
-.nightStatus:not(:empty) { margin-top: 14px; padding: 11px 13px; border: 1px solid var(--night-border); background: #16191f; border-radius: 9px; }
+.nightScreeningDetails { flex: 1 1 215px; min-width: 0; }
+.nightEventLine, .nightOnAir, .nightPresence, .nightScreeningTime { display: flex; align-items: center; gap: 6px; color: var(--night-text-muted); font-size: 12px; }
+.nightEventLine { flex-wrap: wrap; column-gap: 12px; }
+.nightEventLine svg, .nightPresence svg { width: 14px; height: 14px; }
+.nightEventLine time { min-width: 0; overflow-wrap: anywhere; }
+.nightPresence { white-space: nowrap; }
+.nightOnAir { color: #ffadba; font-weight: 650; }
+.nightOnAir i { width: 7px; height: 7px; background: #ff728a; border-radius: 50%; }
+.nightBroadcastInfo h2 { margin: 5px 0 0; font-size: clamp(20px, 2vw, 28px); line-height: 1.13; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.nightBroadcastInfo h2, .nightBroadcastInfo p { display: none; }
+.nightBroadcast:has([data-night-player]:not([hidden])) .nightBroadcastInfo h2,
+.nightBroadcast:has([data-night-player]:not([hidden])) .nightBroadcastInfo p { display: block; }
+.nightBroadcast:has([data-night-player]:not([hidden])) :is([data-night-join], .nightCountdown) { display: none; }
+.nightCountdown { display: block; margin-top: 5px; font-size: 14px; line-height: 1.35; font-weight: 650; font-variant-numeric: tabular-nums; }
+.nightCountdown:empty { display: none; }
+.nightBroadcastInfo p, .nightStatus, .nightComposeStatus { color: var(--night-text-muted); font-size: 13px; line-height: 1.5; margin: 4px 0 0; }
+.nightStatus:not(:empty) { margin: 0; padding: 10px 16px; border-top: 1px solid var(--night-border); background: #181f2a; border-radius: 0 0 15px 15px; overflow-wrap: anywhere; }
 .nightStatus:empty, .nightComposeStatus:empty, .nightVoteStatus:empty { display: none; }
+.nightBroadcast > .nightTextButton { margin-inline: 12px; }
 
 .nightPlayerMount { position: absolute; inset: 0; }
 .nightPlayerMount .svPlayerEmbedded { width: 100%; height: 100%; margin: 0; padding: 0; }
@@ -104,128 +119,129 @@ body.svCleanShell .svNightPage {
 .nightPlayerMount .svPlayerEmbeddedNote { display: none; }
 .nightPlayerMount .svPlayerVideo { object-fit: contain; }
 .svNightPage[data-night-following=false] .nightPlayerMount::after {
-  content: 'Paused for you'; position: absolute; z-index: 5; top: 14px; left: 14px; padding: 6px 9px;
-  color: #eee; background: #171b23; border: 1px solid var(--night-border); border-radius: 6px; font-size: 12px; pointer-events: none;
+  content: 'Paused for you'; position: absolute; z-index: 5; top: 12px; left: 12px; padding: 6px 9px;
+  color: #f4f6fa; background: #171e2a; border: 1px solid var(--night-border); border-radius: 6px; font-size: 12px; pointer-events: none;
 }
 
 .nightChat {
-  grid-area: chat; display: flex; flex-direction: column; overflow: hidden;
-  height: clamp(360px, calc((min(1440px, 100vw - 72px) - 330px) * .5625 + 80px), 735px);
-  border: 1px solid var(--night-border); border-radius: 14px; background: #111419;
+  grid-area: chat; display: flex; flex-direction: column; align-self: stretch; contain: size;
+  min-height: 0; overflow: hidden;
 }
-.nightChat[data-collapsed=true] { height: auto; }
-@media (min-width: 951px) {
-  [data-night-phase-state="unavailable"]:not(:has(.nightFeatureArt)) .nightChat:not([data-collapsed=true]) { height: 370px; }
-}
-.nightChatHeader { display: flex; align-items: center; justify-content: space-between; min-height: 54px; padding: 3px 15px; border-bottom: 1px solid #ffffff10; }
+.nightChat[data-collapsed=true] { align-self: start; contain: none; height: auto; }
+.nightChatHeader { display: flex; align-items: center; justify-content: space-between; min-height: 53px; padding: 3px 14px; border-bottom: 1px solid #ffffff14; }
+.nightChat[data-collapsed=true] .nightChatHeader { border-bottom: 0; }
 .nightChatHeader > div { display: flex; align-items: center; gap: 9px; }
-.nightChatHeader h2 { margin: 0; font-size: 15px; font-weight: 550; }
-.nightChatHeader svg { color: #b8c0ce; }
+.nightChatHeader h2 { margin: 0; color: #edf1fa; font-size: 15px; font-weight: 630; }
+.nightChatHeader svg { color: #c0cce1; }
 .nightChatBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.nightMessages { flex: 1; overflow: auto; min-height: 0; padding: 15px; scrollbar-width: thin; overscroll-behavior: contain; }
-.nightChatEmpty { margin: 28px 0; color: #a5adb9; font-size: 13px; text-align: center; }
-.nightMessage { display: flex; align-items: start; gap: 9px; margin-bottom: 15px; min-width: 0; }
-.nightAvatar { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 8px; background: #222731; color: #d7dde9; flex: none; }
+.nightMessages { flex: 1; overflow: auto; min-height: 0; padding: 14px; scrollbar-width: thin; overscroll-behavior: contain; }
+.nightChatEmpty { display: grid; height: 100%; margin: 0; place-items: center; color: var(--night-text-muted); font-size: 13px; text-align: center; }
+.nightMessage { display: flex; align-items: start; gap: 9px; margin-bottom: 14px; min-width: 0; }
+.nightAvatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #273449; color: #e5edf9; flex: none; }
 .nightMessage > div { min-width: 0; }
-.nightMessage header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #e0e3ea; font-size: 12px; }
-.nightMessage time { color: #9ba4b2; font-size: 11px; }
-.nightMessage p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.55; color: #bec5d0; }
-.nightComposerWrap { padding: 11px; border-top: 1px solid #ffffff10; }
-.nightChatSignin, .nightComposer { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border: 1px solid var(--night-border); border-radius: 9px; background: #1a1e26; }
+.nightMessage header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: #e8edf7; font-size: 12px; overflow-wrap: anywhere; }
+.nightMessage time { color: #a8b5c9; font-size: 11px; }
+.nightMessage p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.55; color: #c4cddd; }
+.nightComposerWrap { padding: 10px; border-top: 1px solid #ffffff14; }
+.nightChatSignin, .nightComposer { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border: 1px solid var(--night-border); border-radius: 9px; background: #1e2633; }
 .nightChatSignin { padding: 8px 11px; font-size: 13px; }
-.nightChatSignin:hover { background: #242a34; }
-.nightComposer input { min-width: 0; width: 100%; height: 44px; padding: 9px 11px; background: none; border: 0; color: #f4f4f5; font: inherit; font-size: 13px; }
+.nightChatSignin:hover { background: #2a3647; }
+.nightComposer input { min-width: 0; width: 100%; height: 44px; padding: 9px 11px; background: none; border: 0; color: #f4f6fa; font: inherit; font-size: 13px; }
 .nightComposer:focus-within { border-color: var(--night-accent); }
 .nightComposer input:focus-visible { outline: 0; }
-.nightSend { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 8px; background: none; color: #d5dbe6; }
-.nightSend:hover { background: #ffffff0a; }
-.nightComposeStatus:not(:empty) { padding: 5px; }
+.nightSend { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 8px; background: none; color: #e2ebf8; }
+.nightSend:hover { background: #ffffff0d; }
+.nightComposeStatus:not(:empty) { padding: 4px; }
 
-.nightBallot { grid-area: ballot; padding-top: 21px; border-top: 1px solid #ffffff17; min-width: 0; }
-.nightSectionHead { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
-.nightSectionHead h2 { margin: 0; font-weight: 600; font-size: 25px; letter-spacing: -.035em; line-height: 1.2; }
-.nightSectionHead p { margin: 6px 0 0; color: #aeb4c0; font-size: 13px; line-height: 1.5; }
+.nightBallot { grid-area: ballot; min-width: 0; }
+.nightSectionHead { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 13px; }
+.nightSectionHead h2 { margin: 0; font-weight: 650; font-size: clamp(22px, 2.3vw, 30px); letter-spacing: -.036em; line-height: 1.15; }
+.nightSectionHead p { margin: 5px 0 0; color: var(--night-text-muted); font-size: 13px; line-height: 1.5; }
 .nightSectionHead p:empty { display: none; }
-.nightBallotSummary { display: grid; gap: 5px; text-align: right; color: #b1b7c3; font-size: 12px; line-height: 1.45; }
-.nightBallotSummary strong { color: #f4f4f5; }
-.nightBallotGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
-.nightBallotCard { min-width: 0; scroll-margin-top: 104px; }
-.nightBallotPoster { position: relative; overflow: hidden; aspect-ratio: 2 / 3; background: #1c222d; border: 1px solid var(--night-border); border-radius: 10px; }
-.nightBallotPoster > img { width: 100%; height: 100%; object-fit: cover; transition: transform .24s ease; }
-.nightBallotCard.isSelected .nightBallotPoster, .nightBallotCard:target .nightBallotPoster { border-color: var(--night-accent); }
-.nightBallotCopy h3 { margin: 10px 0 0; min-height: 2.7em; font-size: 14px; font-weight: 550; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.nightBallotCopy p { margin: 4px 0 12px; color: #a6aeba; font-size: 12px; }
-.nightVoteTotals { display: flex; justify-content: space-between; color: #a8b0bd; font-size: 12px; }
-.nightVoteTotals b { color: #e9ebee; }
-.nightVoteBar { display: block; height: 3px; margin: 6px 0 9px; overflow: hidden; border-radius: 5px; background: #ffffff18; }
-.nightVoteBar i { display: block; height: 100%; background: var(--night-accent); transition: width .25s ease; }
+.nightBallotSummary { display: grid; gap: 4px; text-align: right; color: var(--night-text-muted); font-size: 12px; line-height: 1.4; }
+.nightBallotSummary strong { color: #f4f6fa; }
+.nightBallotGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.nightBallotCard {
+  display: grid; grid-template-columns: clamp(62px, 6.5vw, 90px) minmax(0, 1fr); align-items: start; gap: 11px;
+  min-width: 0; padding: 9px; scroll-margin-top: 104px; border: 1px solid var(--night-border);
+  border-radius: 12px; background: var(--night-panel); transition: border-color .18s ease, background-color .18s ease;
+}
+.nightBallotCard:is(.isSelected, .isWinner, :target) { border-color: var(--night-accent); background: #16212d; }
+.nightBallotPoster { position: relative; overflow: hidden; aspect-ratio: 2 / 3; background: #222d3e; border-radius: 7px; }
+.nightBallotPoster > img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .22s ease; }
+.nightBallotCopy { display: flex; flex-direction: column; gap: 7px; align-self: stretch; min-width: 0; padding: 1px 1px 0 0; }
+.nightBallotCopy h3 { margin: 0; font-size: 15px; font-weight: 650; line-height: 1.2; overflow-wrap: anywhere; }
+.nightBallotMeta { margin: 4px 0 0; color: var(--night-text-muted); font-size: 12px; }
+.nightBallotWinner { display: block; margin-top: 4px; color: var(--night-accent); font-size: 11px; font-weight: 650; }
+.nightBallotVote { margin-top: auto; }
+.nightVoteTotals { display: flex; justify-content: space-between; gap: 6px; color: var(--night-text-muted); font-size: 12px; }
+.nightVoteTotals b { color: #eef3fc; }
+.nightVoteBar { display: block; height: 3px; margin: 5px 0 0; overflow: hidden; border-radius: 4px; background: #ffffff20; }
+.nightVoteBar i { display: block; height: 100%; background: var(--night-accent); transition: width .22s ease; }
 .nightVoteButton {
-  min-height: 44px; width: 100%; background: #171a21; color: #e1e5eb; border: 1px solid var(--night-border);
-  border-radius: 9px; font: inherit; font-size: 13px;
+  min-height: 40px; width: 100%; padding: 3px 6px; border: 1px solid var(--night-border); border-radius: 7px;
+  background: #212b3a; color: #e8effa; font: inherit; font-size: 13px;
 }
-.nightVoteButton:hover:not(:disabled) { background: #242a34; border-color: #ffffff45; }
+.nightVoteButton:hover:not(:disabled) { background: #303e53; border-color: #ffffff49; }
 .nightVoteButton[aria-pressed=true] { color: var(--night-accent); border-color: var(--night-accent); }
-.nightVoteButton:disabled { opacity: .6; }
-.nightVoteStatus { margin: 9px 0 0; color: #d0d5de; font-size: 13px; }
-.nightEmptyBallot { grid-column: 1 / -1; margin: 0; padding: 16px; background: #101318; border: 1px solid var(--night-border); border-radius: 10px; color: #aeb4c0; font-size: 13px; }
+.nightVoteButton:disabled:not([aria-pressed=true]) { display: none; }
+.nightVoteButton:disabled[aria-pressed=true] { min-height: 0; padding: 0; border: 0; background: none; text-align: left; font-size: 12px; }
+.nightVoteStatus { margin: 8px 0 0; color: #d5deeb; font-size: 13px; }
+.nightEmptyBallot { grid-column: 1 / -1; margin: 0; padding: 16px; border: 1px solid var(--night-border); border-radius: 10px; background: var(--night-panel); color: var(--night-text-muted); font-size: 13px; }
 
-.nightUpcoming { margin-top: 36px; }
-.nightUpcomingGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.nightUpcoming { margin-top: 33px; }
+.nightUpcomingGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
 .nightUpcomingCard {
-  display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 70px;
-  padding: 13px; border: 1px solid var(--night-border); border-radius: 11px; background: #111419;
+  display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 68px; padding: 10px;
+  border: 1px solid var(--night-border); border-radius: 11px; background: var(--night-panel); transition: background-color .16s ease;
 }
-.nightUpcomingCard:hover { background: #171c24; }
-.nightUpcomingCard strong, .nightUpcomingCard time { display: block; }
-.nightUpcomingCard strong { font-size: 14px; font-weight: 550; }
-.nightUpcomingCard time { margin-top: 3px; font-size: 12px; color: #a6aeba; }
-.nightUpcomingIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: #202631; flex: none; }
-.nightUpcomingAction { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: #b2bac7; font-size: 12px; white-space: nowrap; }
+.nightUpcomingCard:hover { background: #1b2533; }
+.nightUpcomingCard > :nth-child(2) { min-width: 0; }
+.nightUpcomingCard strong, .nightUpcomingCard time { display: block; overflow-wrap: anywhere; }
+.nightUpcomingCard strong { font-size: 14px; font-weight: 620; }
+.nightUpcomingCard time { margin-top: 3px; font-size: 12px; color: var(--night-text-muted); }
+.nightUpcomingIcon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: #253146; flex: none; }
+.nightUpcomingAction { display: inline-flex; flex: none; align-items: center; gap: 5px; margin-left: auto; color: var(--night-text-muted); font-size: 12px; white-space: nowrap; }
 .nightSrOnly { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 #nightBallotTitle { scroll-margin-top: 108px; }
 
 @media (hover: hover) and (pointer: fine) {
-  .nightBallotCard:hover .nightBallotPoster > img { transform: scale(1.025); }
+  .nightBallotCard:hover { border-color: #b4c6e880; }
+  .nightBallotCard:hover .nightBallotPoster > img { transform: scale(1.045); }
 }
-@media (max-width: 1050px) {
-  .nightUpcomingGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 924px) {
+  .nightScreeningGrid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'broadcast' 'chat' 'ballot'; gap: 15px; }
+  .nightChat { height: 268px; contain: none; }
+  .nightBallot { margin-top: 8px; }
+  .nightBallotGrid, .nightUpcomingGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 950px) {
-  body.svCleanShell .svNightPage { width: calc(100% - 48px); padding-top: 108px; }
-  .nightScreeningGrid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "broadcast" "ballot" "chat"; }
-  .nightChat { height: 350px; }
-  .nightBallotGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 14px; }
+@media (max-width: 570px) {
+  .nightSectionHead { flex-wrap: wrap; align-items: start; gap: 5px; }
+  .nightBallotSummary { display: flex; flex-wrap: wrap; justify-content: space-between; width: 100%; text-align: left; }
+  .nightBallotGrid, .nightUpcomingGrid { grid-template-columns: minmax(0, 1fr); }
+  .nightBallotCard { grid-template-columns: 69px minmax(0, 1fr); }
 }
 @media (max-width: 620px) {
-  body.svCleanShell .svNightPage { width: calc(100% - 32px); padding: 100px 0 90px; }
-  .nightPageTop { display: block; }
-  .nightHeaderActions { margin-top: 9px; }
-  .nightStage { aspect-ratio: auto; border-radius: 12px; }
-  .nightStage:has(.nightPlayerMount:not([hidden])) { aspect-ratio: 16 / 9; }
-  .nightLobby {
-    position: relative; inset: auto; display: flex; flex-direction: column; width: 100%;
-    min-height: 250px; aspect-ratio: 4 / 3;
-  }
-  .nightStageTop { position: relative; inset: auto; padding: 12px 12px 0; }
-  .nightLobbyCopy { position: relative; inset: auto; margin-top: auto; padding: 16px 14px 14px; }
-  .nightLobbyCopy h2 { font-size: clamp(26px, 7.7vw, 36px); }
-  .nightLobbyBottom { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; margin-top: 11px; }
-  .nightStart, .nightStart strong { font-size: 11px; }
-  .nightLobbyActions { flex-wrap: wrap; }
-  .nightLobbyActions .nightButton { padding-inline: 10px; font-size: 12px; }
-  .nightScreeningActions { gap: 5px; flex-wrap: wrap; justify-content: end; }
-  .nightBroadcastInfo h2 { font-size: 21px; }
-  .nightSectionHead { align-items: start; flex-wrap: wrap; }
-  .nightSectionHead h2 { font-size: 22px; }
-  .nightBallotSummary { display: flex; flex-wrap: wrap; justify-content: space-between; text-align: left; width: 100%; }
-  .nightBallotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .nightUpcomingGrid { grid-template-columns: minmax(0, 1fr); }
+  body.svCleanShell .svNightPage { width: calc(100% - 28px); padding: 91px 0 106px; }
+  .nightPageTop { margin-bottom: 12px; }
+  .nightPageTop h1 { font-size: 30px; }
+  .nightBreadcrumb { margin-bottom: 5px; }
+  .nightScreeningGrid { gap: 12px; }
+  .nightBroadcast, .nightChat { border-radius: 12px; }
+  .nightStage { border-radius: 11px 11px 0 0; }
+  .nightLobbyCopy p { margin-top: 3px; font-size: 12px; }
+  .nightBroadcastInfo { padding: 10px; gap: 9px; }
+  .nightScreeningDetails { flex-basis: 100%; }
+  .nightScreeningActions { width: 100%; gap: 5px; }
+  .nightScreeningActions > :not(.nightIconButton) { flex-grow: 1; }
+  .nightScreeningActions .nightButton { padding-inline: 8px; gap: 5px; font-size: 12px; }
+  .nightBroadcast:has([data-night-player]:not([hidden])) .nightBroadcastInfo { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .nightBroadcast:has([data-night-player]:not([hidden])) .nightBroadcastInfo :is(.nightScreeningTime, p) { display: none; }
+  .nightBroadcast:has([data-night-live]:not([hidden])) .nightBroadcastInfo { grid-template-columns: minmax(0, 1fr); }
+  .nightChat { height: 206px; }
+  .nightChatHeader { min-height: 48px; }
   .nightComposer input { font-size: 16px; }
-}
-@media (max-width: 360px) {
-  .nightLobby { min-height: 266px; }
-  .nightLobbyActions { gap: 6px; }
-  .nightLobbyActions .nightButton { padding-inline: 8px; gap: 5px; }
+  .nightVoteButton { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .svNightPage *, .svMovieNightFeature * { transition: none !important; animation: none !important; }

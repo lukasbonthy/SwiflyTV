@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {browser,tick,cleanup}=require('./ui-helpers.cjs'),{movieNightsMarkup}=require('../ui/movie-nights'),{playerMarkup}=require('../ui/player');
 test.afterEach(cleanup);
-function fixture({signedIn=false,phase='live',outage=false}={}){
+function fixture({signedIn=false,phase='live',outage=false,phone=false}={}){
  const film={id:1,title:'A movie',poster:'https://image.tmdb.org/t/p/w342/film.jpg',backdrop:'https://image.tmdb.org/t/p/w1280/film.jpg',runtime:100,votes:1},time=Date.now();
  const snapshot={event:{id:'2026-11-21',title:'Saturday Movie Night',phase,startsAt:time-50000,votingClosesAt:time-350000,candidates:[film],winner:phase==='live'?film:null,totalVotes:1,yourVote:signedIn?1:null,sourceStatus:phase==='live'?'ready':'idle',source:phase==='live'?{status:'ok',playbackUrl:'/media/test.mp4'}:undefined,playbackStartedAt:time-50000,duration:6000,viewers:1,messages:[]},viewer:{signedIn,name:signedIn?'Luke':''},serverTime:time,upcoming:[],schedule:{timeZone:'America/New_York',hour:20,days:[5,6]}};
  const outageState={code:'storage_unavailable',message:'Voting and chat are temporarily unavailable.'};
@@ -12,6 +12,7 @@ function fixture({signedIn=false,phase='live',outage=false}={}){
  let current={ready:true,status:'ready',paused:true,currentTime:0},mounted;const loads=[];
  const player={mount:root=>{mounted=root;return player;},setRemoteMode(){},getState:()=>({...current}),loadSource:async(data,options)=>{loads.push(data);current.currentTime=options?.resumeAt||0;current.ready=true;return true;},play:async()=>{current.paused=false;return true;},pause:()=>{current.paused=true;},seek:time=>{seeks.push(time);current.currentTime=time;},destroy:()=>{mounted=null;}};
  const account=signedIn?{id:'account-one'}:null;
+ if(phone){const match=w.matchMedia;w.matchMedia=query=>query==='(max-width:620px)'?{matches:true}:match(query);}
  w.io=()=>{socket.connected=true;return socket;};w.SwiflyPlayer=player;w.SwiflyAccount={user:outage?null:account,ready:Promise.resolve({user:outage?null:account})};w.fetch=async()=>({ok:true,json:async()=>snapshot});w.boot('community/movie-nights.js');
  return{...b,w,snapshot,handlers,sent,seeks,loads,player,socket,get current(){return current;},get mounted(){return mounted;},restoreStorage(){outage=false;w.SwiflyAccount.user=account;w.document.dispatchEvent(new w.Event('swifly:account-hydrated'));},send:(name,data)=>{if(name==='disconnect')socket.connected=false;if(name==='connect')socket.connected=true;return handlers.get(name)?.(data);}};
 }
@@ -26,6 +27,32 @@ test('a public vote update preserves the personalized ballot and safely appends 
  const f=fixture({signedIn:true,phase:'voting'});f.snapshot.event.yourVote=1;await tick();f.send('night:update',{...f.snapshot,viewer:{signedIn:false},event:{...f.snapshot.event,totalVotes:2,yourVote:null,candidates:[{...f.snapshot.event.candidates[0],votes:2}]}});await tick();
  assert.equal(f.w.document.querySelector('[data-night-message-form]').hidden,false);assert.equal(f.w.document.querySelector('[data-night-vote]').getAttribute('aria-pressed'),'true');
  f.send('night:message',{id:'m',name:'<b>Film fan</b>',text:'<img src=x onerror=alert(1)>',createdAt:Date.now()});f.send('night:message',{id:'m',name:'Duplicate',text:'Ignore',createdAt:Date.now()});assert.equal(f.w.document.querySelectorAll('[data-night-message-id="m"]').length,1);assert.equal(f.w.document.querySelector('[data-night-message-list] img'),null);f.w.SwiflyMovieNights.destroy();
+});
+test('a phone opens chat at showtime unless the viewer has chosen to collapse it',()=>{
+ for(const manuallyCollapsed of [false,true]){
+  const f=fixture({phase:'voting',phone:true}),doc=f.w.document;
+  const toggle=doc.querySelector('[data-night-chat-toggle]'),body=doc.querySelector('[data-night-chat-body]');
+  assert.equal(body.hidden,true);
+  if(manuallyCollapsed){toggle.click();assert.equal(body.hidden,false);toggle.click();}
+  const event=f.snapshot.event;
+  f.send('night:update',{...f.snapshot,event:{...event,phase:'live',winner:event.candidates[0]}});
+  assert.equal(body.hidden,manuallyCollapsed);
+  assert.equal(toggle.getAttribute('aria-expanded'),String(!manuallyCollapsed));
+  f.w.SwiflyMovieNights.destroy();
+ }
+});
+test('a failed lobby backdrop falls back to the bundled art until a new film is featured',()=>{
+ const f=fixture({phase:'voting'}),doc=f.w.document;
+ const image=doc.querySelector('[data-night-art]');
+ image.dispatchEvent(new f.w.Event('error'));
+ assert.equal(image.hidden,true);
+ assert(doc.querySelector('.nightCoverArt'));
+ const event=f.snapshot.event;
+ const next={...event.candidates[0],backdrop:'https://image.tmdb.org/t/p/w1280/new-film.jpg'};
+ f.send('night:update',{...f.snapshot,event:{...event,candidates:[next]}});
+ assert.equal(image.src,next.backdrop);
+ assert.equal(image.hidden,false);
+ f.w.SwiflyMovieNights.destroy();
 });
 test('disconnect pauses locally, reconnect requests a complete current snapshot, and disposal closes transport',async()=>{
  const f=fixture();await tick();f.w.document.querySelector('[data-night-join]').click();await tick();f.send('disconnect');assert.equal(f.current.paused,true);assert.match(f.w.document.querySelector('[data-night-status]').textContent,/reconnect/i);f.send('connect');await tick();await tick();assert(f.sent.filter(x=>x.name==='night:join').length>=2);assert.equal(f.current.paused,false);f.w.SwiflyMovieNights.destroy();assert.equal(f.w.SwiflyMovieNights.active,false);
