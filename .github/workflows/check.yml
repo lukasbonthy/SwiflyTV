@@ -20,6 +20,8 @@ jobs:
       - run: npm run test:ui
       - run: npm run prepare:ai
       - run: npm run test:recommendations
+      - name: Build React/Vite assets required by browser integration fixtures
+        run: npm run build
       - id: browser-install
         run: node node_modules/playwright-core/cli.js install chromium
       # Check Home composition and real backdrop optics before the wider suite.
