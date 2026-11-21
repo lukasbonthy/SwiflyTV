@@ -97,8 +97,10 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
  assert.equal(event.phase,'voting');
  // Showcase the open ballot independently of the simultaneously live test fixture.
  const {id,startsAt,phase,candidates,winner,viewers}=event;
- t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates,winner,viewers,timeZone:schedule.timeZone}));
  const leader=candidates.reduce((first,film)=>film.votes>first.votes?film:first);
+ const title='Spider-Man: Across the Spider-Verse';
+ const previewCandidates=candidates.map(film=>film===leader?{...film,title}:film);
+ t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates:previewCandidates,winner,viewers,timeZone:schedule.timeZone}));
  const firstPick=candidates.find(film=>film.id!==leader.id);
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
@@ -108,11 +110,13 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
   const feature=f.page.locator('[data-home-movie-night]');
   const spotlight=feature.locator('.svHomeNightSpotlight');
   assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
-  assert.equal(await spotlight.locator('strong').textContent(),leader.title);
+  const headline=spotlight.locator('strong');
+  assert.equal(await headline.textContent(),title);
   assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
   await feature.evaluate(node=>node.scrollIntoView({block:'center',behavior:'instant'}));
   await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
   const displayedPoster=await spotlight.locator('.svHomeNightPoster img').getAttribute('src');
+  if(label==='small-phone')assert(await headline.evaluate(node=>node.scrollHeight<=node.clientHeight+1),'narrow headlines are visible in full');
   if(label==='small-phone')assert.match(displayedPoster,/^\/assets\/community\/movie-nights-cover\.(?:png|webp)$/);
   else assert.equal(displayedPoster,leader.poster);
   const box=await spotlight.boundingBox();
