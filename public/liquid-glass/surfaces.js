@@ -140,6 +140,8 @@
     entries.delete(entry.host);
   }
   function ensure(host, approached = false) {
+    // Standalone account forms own their matte controls and active tab styling.
+    if (host instanceof HTMLElement && host.closest('main[data-auth-mode]')) return;
     // A season can contain hundreds of links. Skip the entire browser before
     // near-row observation as well as lens allocation, including late metadata
     // and player/party pickers. Their opaque surfaces are owned by episode CSS.

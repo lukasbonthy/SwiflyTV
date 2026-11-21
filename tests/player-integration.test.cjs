@@ -211,7 +211,7 @@ test('main catalog, signup and login all have the ambient scene without compromi
    assert.equal(aurora.querySelectorAll('.svAuroraRibbon').length,3,route+' should mount moving curtains');
    if(route==='/signup'||route==='/login'){
      assert(d.querySelector('.dsAuthBrand'),route+' account branding missing');
-     assert(d.querySelector('.svAuthPrivacy'),route+' local-only description missing');
+     assert(d.querySelector('.svAuthRecovery a[href="/account#account-data"]'),route+' library recovery link missing');
      assert(d.querySelector('.dsAuthCard h1'),route+' form heading missing');
      const form=d.querySelector('#safeAuthForm');
      assert(form);
@@ -242,7 +242,7 @@ test('simple auth pages share one centered panel and do not add distracting adve
   assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
   assert(d.querySelector('[data-st-open]'));
   const css=await(await fetch(base+'/assets/clean/auth.css')).text();
-  assert.match(css,/max-width:430px/);
+  assert.match(css,/max-width:\s*430px/);
  }
 });
 
@@ -275,12 +275,12 @@ test('signup is a single refined form with preserved fields and a usable passwor
  assert(d.querySelector('#safeAuthForm input[name="email"][type="email"]'));
  assert(d.querySelector('#safeAuthForm input[name="password"][type="password"]'));
  assert.equal(d.querySelectorAll('[data-auth-toggle-password]').length,1);
- assert.match(html,/assets\/clean\/account\.js\?v=263/,'the shared server auth module owns password reveal and sign-in');
+ assert.match(html,/assets\/clean\/account\.js\?v=264/,'the shared server auth module owns password reveal and sign-in');
  assert.match(html,/aria-pressed/);
  const css=await (await fetch(base+'/assets/clean/auth.css')).text();
- assert.match(css,/:is\(\.svAuthLoginPage,\.svAuthSignupPage\) \.dsAuthCard/);
- assert.match(css,/\.svAuthPasswordToggle:focus-visible/);
- assert.match(html,/assets\/clean\/auth\.css\?v=262/);
+ assert.match(css,/main\.dsAuthPageSafe \.dsAuthCard/);
+ assert.match(css,/:is\(a, input, button\):focus-visible/);
+ assert.match(html,/assets\/clean\/auth\.css\?v=264/);
 });
 test('movie discovery artwork fades beyond the hero without a visible seam',async()=>{
  const d=parse(await(await fetch(base+'/welcome')).text()).window.document;
@@ -342,28 +342,30 @@ test('Welcome uses the featured backdrop as an ambient discovery transition',asy
  assert.match(bridge.getAttribute('style')||'',/--sv-light-art:url\('/);
 });
 
-test('login and signup share one compact design with identical 430px card footprints',async()=>{
- const stylesheet = await(await fetch(base+'/assets/clean/auth.css?v=262')).text();
- const shared=':is(.svAuthLoginPage,.svAuthSignupPage)';
- assert.match(stylesheet,/width:min\(430px,100%\) !important/);
- assert.match(stylesheet,/max-width:430px !important/);
- assert.doesNotMatch(stylesheet,/474px|\.svAuthSignupPage \.dsAuthShellSafe/,'signup must not be enlarged again');
- assert.match(stylesheet,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,'matching two-tab controls');
- assert.match(stylesheet,/outline:2px solid rgba\(220,247,235,\.86\)/,'visible keyboard focus on fields');
- assert.match(stylesheet,/\.svAuthPasswordToggle:focus-visible/);
- assert.match(stylesheet,/prefers-reduced-motion:reduce/);
- assert(stylesheet.includes(shared),'login and signup must share the refinements');
- for(const [route,active,fields] of [['/login','Log in',2],['/signup','Sign up',3]]){
-  const response=await fetch(base+route);
-  assert.equal(response.status,200);
-  const doc=parse(await response.text()).window.document;
-  assert.equal(doc.querySelectorAll('.dsAuthCard').length,1);
-  assert.equal(doc.querySelectorAll('#safeAuthForm input[required]').length,fields);
-  assert.equal(doc.querySelectorAll('.svAuthKicker,.dsAuthPitch,.svAuthShowcase').length,0,'no extra decorations');
-  assert.equal(doc.querySelectorAll('.dsAuthSwitch a').length,2);
-  assert.equal(doc.querySelector('.dsAuthSwitch .active')?.textContent,active);
-  assert.equal(doc.querySelectorAll('.svAuthPasswordToggle').length,1);
-  assert(doc.querySelector('link[href="/assets/clean/auth.css?v=262"]'),'updated auth stylesheet should load');
+test('account entry keeps the requested destination and form submissions use POST', async () => {
+ const target = '/movie-night/2026-11-21?view=ballot#films';
+ const search = new URLSearchParams({redirect: target});
+ const malformed = new URLSearchParams({redirect: '/movie-nights/\t'});
+ const clean = parse(await (await fetch(base + '/signup?' + malformed)).text()).window.document;
+ assert.equal(clean.querySelector('.dsAuthSwitch a').getAttribute('href'), '/login');
+
+ for (const [mode, expectedFields] of [['login', 2], ['signup', 3]]) {
+  const response = await fetch(base + '/' + mode + '?' + search);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  const d = parse(await response.text()).window.document;
+  assert.equal(d.querySelectorAll('.dsAuthCard').length, 1);
+  assert(d.body.classList.contains('svAccountEntry'));
+  assert(d.querySelector('.dsAuthBrand img[src*="swiflytv-nav-logo.svg"]'));
+  const form = d.getElementById('safeAuthForm');
+  assert.equal(form.method, 'post');
+  assert.equal(form.getAttribute('action'), '/api/connect/auth/' + mode);
+  assert.equal(form.querySelectorAll('input[required]').length, expectedFields);
+  assert(form.querySelector('[data-auth-submit][disabled]'));
+  assert(d.querySelector('[data-auth-availability][hidden] [data-auth-retry]'));
+  const links = [...d.querySelectorAll('.dsAuthSwitch a')];
+  assert.deepEqual(links.map(a => new URL(a.getAttribute('href'), base).searchParams.get('redirect')), [target, target]);
+  assert.equal(new URL(d.querySelector('.dsAuthSwitch [aria-current]').getAttribute('href'), base).pathname, '/' + mode);
  }
 });
 
@@ -400,7 +402,7 @@ test('Studio glass uses one material on every browsing route and native transiti
  const css=await(await fetch(base+'/assets/liquid-glass/controls.css?v=255')).text();
  const finish=await(await fetch(base+'/assets/clean/finish.css?v=176')).text();
  const navigation=await(await fetch(base+'/assets/clean/navigation.css?v=2')).text();
- const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=281')).text();
+ const script=await(await fetch(base+'/assets/liquid-glass/surfaces.js?v=282')).text();
  assert.match(css,/data-st-glass="liquid"/);
  assert.match(css,/data-st-glass="subtle"/);
  assert.match(css,/data-st-glass="off"/);
@@ -413,7 +415,7 @@ test('Studio glass uses one material on every browsing route and native transiti
    assert.equal(response.status,200,route);
    const doc=parse(await response.text()).window.document;
    assert(stylesheetLink(doc,'/assets/liquid-glass/controls.css'),route+' lacks unified glass');
-   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=281"]'),route+' uses stale glass renderer');
+   assert(doc.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=282"]'),route+' uses stale glass renderer');
  }
  const watch=await(await fetch(base+'/watch/movie/101')).text();
  assert(!watch.includes('controls.css?v=189'),'watch page must be left alone');
@@ -436,12 +438,12 @@ test('v176 supplies a real, masked details backdrop with no hard border at the o
  assert.match(css,/\.svDetailShade \{/);
  assert.match(css,/\.svDetailBody \{/);
  assert(stylesheetLink(d,'/assets/clean/polish.css'));
- assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=281"]'));
+ assert(d.querySelector('script[src="/assets/liquid-glass/surfaces.js?v=282"]'));
 });
-test('v176 adds subtle Liquid Glass to both compact auth pages without resizing',async()=>{
+test('auth keeps its compact surface when the shared theme stylesheet loads',async()=>{
  const css=await(await fetch(base+'/assets/clean/polish.css?v=176')).text();
- const auth=await(await fetch(base+'/assets/clean/auth.css?v=262')).text();
- assert.match(auth,/max-width:430px !important/);
+ const auth=await(await fetch(base+'/assets/clean/auth.css?v=264')).text();
+ assert.match(auth,/max-width:\s*430px !important/);
  assert.doesNotMatch(css,/dsAuthShellSafe\s*\{[^}]*width:/);
  assert.match(css,/main\.dsAuthPageSafe \.dsAuthCard/);
  assert.match(css,/main\.dsAuthPageSafe \.dsSafeAuthForm \.dsPrimaryBtn/);

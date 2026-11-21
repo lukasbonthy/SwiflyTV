@@ -1,298 +1,174 @@
-/* Swifly v167: nothing between you and the film. One simple account form. */
-body.svCleanShell main.dsAuthPageSafe {
-  position:relative;isolation:isolate;min-height:100svh;width:100%;
-  display:flex !important;align-items:center;justify-content:center;
-  padding:100px 20px 68px !important;background:transparent !important;
+/* Account entry has its own header and keeps the focus on the form. */
+body.svAccountEntry :is(.netflixTopbar, .mobileNav, .svBrowseScene > .footer) { display: none !important; }
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe {
+  position: relative;
+  isolation: isolate;
+  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100svh;
+  padding: 0 24px 36px !important;
+  color: #f4f6fb;
+  background: radial-gradient(ellipse at 50% 15%, #1823398c, transparent 62%) !important;
 }
-body.svCleanShell main.dsAuthPageSafe::before,
-body.svCleanShell main.dsAuthPageSafe::after {display:none !important;}
-body.svCleanShell .dsAuthShellSafe {
-  display:flex !important;flex-direction:column;align-items:stretch;gap:26px;
-  width:min(430px,100%) !important;max-width:430px !important;min-width:0;
-  margin:auto !important;padding:0 !important;transform:none;
-}
-body.svCleanShell .dsAuthBrand {
-  display:inline-flex !important;align-items:center;gap:10px;width:max-content;min-height:32px;
-  align-self:center;color:#f0f4f4;text-decoration:none !important;
-  font:650 calc(19px * var(--st-ui-scale, 1))/1 "Host Grotesk",system-ui,sans-serif !important;letter-spacing:-.055em;
-}
-body.svCleanShell .dsAuthBrand > span {
-  display:grid;place-items:center;width:30px;height:30px;border-radius:9px 9px 9px 4px;
-  background:#eef5f2;transform:rotate(-7deg);box-shadow:none;
-}
-body.svCleanShell .dsAuthBrand > span::after {
-  content:"";width:8px;height:8px;border:2px solid #172520;border-left-color:transparent;
-  border-radius:50%;transform:rotate(26deg);
-}
-body.svCleanShell .dsAuthCard {
-  display:block !important;width:100%;min-width:0;
-  padding:clamp(25px,5vw,37px) !important;border-radius:20px !important;
-  border:1px solid rgba(229,240,236,.18) !important;
-  background:rgba(12,16,18,.82) !important;
-  box-shadow:0 24px 85px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.055) !important;
-  -webkit-backdrop-filter:blur(28px) saturate(1.08);
-  backdrop-filter:blur(28px) saturate(1.08);
-}
-body.svCleanShell .dsAuthCard::before,body.svCleanShell .dsAuthCard::after {display:none !important;}
-body.svCleanShell .dsAuthSwitch {
-  display:flex !important;align-items:center;justify-content:flex-start;
-  width:auto !important;gap:26px;min-height:0 !important;
-  padding:0 0 13px !important;margin:0 0 28px !important;
-  border:0 !important;border-bottom:1px solid rgba(255,255,255,.15) !important;
-  border-radius:0 !important;background:none !important;box-shadow:none !important;
-}
-body.svCleanShell .dsAuthSwitch a {
-  display:inline-flex !important;align-items:center;justify-content:center;
-  position:relative;width:auto !important;min-height:30px !important;height:auto !important;
-  padding:0 0 5px !important;border:0 !important;border-radius:0 !important;
-  background:transparent !important;box-shadow:none !important;
-  color:#829297 !important;font:500 calc(13px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
-  text-decoration:none !important;
-}
-body.svCleanShell .dsAuthSwitch a.active {
-  background:transparent !important;color:#f6faf8 !important;box-shadow:none !important;
-}
-body.svCleanShell .dsAuthSwitch a.active::after {
-  content:"";position:absolute;height:2px;left:0;right:0;bottom:-14px;
-  background:#e5f3ee;border-radius:99px;
-}
-body.svCleanShell .dsAuthCard h1 {
-  margin:0 0 9px !important;padding:0 !important;
-  font:550 calc(clamp(30px,4vw,38px) * var(--st-ui-scale, 1))/1.12 "Host Grotesk",system-ui,sans-serif !important;
-  letter-spacing:-.055em !important;color:#f5f7f5 !important;text-transform:none !important;
-}
-body.svCleanShell .dsAuthCard .svAuthIntro {
-  margin:0 !important;max-width:none;color:#a3b0b2 !important;
-  font:400 calc(13px * var(--st-ui-scale, 1))/1.6 "Host Grotesk",sans-serif !important;
-}
-body.svCleanShell .dsSafeAuthForm {
-  display:grid;gap:17px;align-items:stretch;margin:28px 0 0 !important;
-}
-body.svCleanShell .dsSafeAuthForm label {
-  display:grid;gap:8px;margin:0 !important;padding:0 !important;
-  color:#c8d5d4 !important;font:550 calc(12px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
-  letter-spacing:0 !important;text-transform:none !important;
-}
-body.svCleanShell .dsSafeAuthForm input {
-  box-sizing:border-box;display:block;width:100%;height:51px;min-height:51px;
-  border:1px solid rgba(226,239,234,.17) !important;border-radius:11px !important;
-  padding:0 15px !important;background:rgba(5,8,10,.56) !important;
-  box-shadow:none !important;color:#f6faf8 !important;
-  font:400 calc(14px * var(--st-ui-scale, 1))/1.4 "Host Grotesk",sans-serif !important;
-}
-body.svCleanShell .dsSafeAuthForm input::placeholder {color:#738389 !important;}
-body.svCleanShell .dsSafeAuthForm input:focus-visible {
-  border-color:#b6e6d3 !important;outline:0 !important;
-  box-shadow:0 0 0 3px rgba(127,219,173,.13) !important;
-}
-body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {
-  display:flex !important;align-items:center;justify-content:space-between;
-  width:100%;height:51px;min-height:51px;margin:6px 0 0 !important;
-  padding:0 17px !important;border:1px solid #e2eee8 !important;border-radius:11px !important;
-  background:#e7f0eb !important;color:#15221e !important;
-  font:650 calc(13px * var(--st-ui-scale, 1))/1 "Host Grotesk",sans-serif !important;
-  box-shadow:none !important;cursor:pointer;transition:background .2s,transform .2s;
-}
-body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn > span:last-child {
-  display:inline-grid;place-items:center;width:28px;height:28px;
-  border:1px solid rgba(19,39,32,.17);border-radius:8px;background:none;
-  color:#15221e;font-size:calc(16px * var(--st-ui-scale, 1));
-}
-body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn:hover {
-  background:#fff !important;transform:translateY(-1px);
-}
-body.svCleanShell .dsAuthFinePrint {
-  margin:24px 0 0 !important;padding:19px 0 0 !important;
-  border-top:1px solid rgba(255,255,255,.12);
-  text-align:center;font:400 calc(12px * var(--st-ui-scale, 1))/1.5 "Host Grotesk",sans-serif !important;color:#8fa0a4;
-}
-body.svCleanShell .dsAuthFinePrint a {color:#e6efeb !important;font-weight:600;text-decoration:none;}
-body.svCleanShell .dsAuthFinePrint a:hover {text-decoration:underline;}
-body.svCleanShell .svAuthPrivacy {
-  margin:13px 0 0;color:#687a7e;text-align:center;
-  font:400 calc(10px * var(--st-ui-scale, 1))/1.5 "Host Grotesk",sans-serif;
-}
-body.svCleanShell .dsAuthTopActions {
-  position:absolute;top:clamp(23px,4vw,42px);right:clamp(20px,5vw,70px);
-  display:flex;align-items:center;gap:16px;z-index:10;
-}
-body.svCleanShell .dsAuthTopActions a {font:500 calc(11px * var(--st-ui-scale, 1)) "Host Grotesk",sans-serif;color:#a4b4b3;text-decoration:none;}
-body.svCleanShell .dsAuthTopActions button[data-st-open] {
-  display:grid;place-items:center;width:38px;height:38px;padding:0;
-  border:1px solid #ffffff2a;border-radius:12px;background:#ffffff09;color:#d7e7e1;cursor:pointer;
-}
-body.svCleanShell .dsAuthTopActions button[data-st-open] svg {width:17px;height:17px;}
-body.svCleanShell .dsAuthPageSafe :is(a,input,button):focus-visible {outline:2px solid #d9f8e5;outline-offset:4px;}
-@media(max-width:480px) {
- body.svCleanShell main.dsAuthPageSafe {padding:95px 18px 45px !important;}
- body.svCleanShell .dsAuthShellSafe {gap:20px;}
- body.svCleanShell .dsAuthCard {padding:25px !important;border-radius:17px !important;}
- body.svCleanShell .dsAuthTopActions {right:18px;top:18px;}
-}
-@media(prefers-reduced-motion:reduce) {
- body.svCleanShell .dsSafeAuthForm .dsPrimaryBtn {transition:none !important;transform:none !important;}
-}
+body.svAccountEntry main.dsAuthPageSafe::before,
+body.svAccountEntry main.dsAuthPageSafe::after { display: none !important; }
 
-/* v173 — one restrained refinement shared by BOTH auth routes.
-   Keep the v167 430px footprint and padding: no enlargement or new panels. */
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthShellSafe {
-  width:min(430px,100%) !important;
-  max-width:430px !important;
-  gap:26px !important;
+body.svAccountEntry .dsAuthTopActions {
+  position: relative;
+  inset: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 1272px);
+  min-height: 68px;
+  margin-inline: auto;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthCard {
-  padding:clamp(25px,5vw,37px) !important;
-  border-radius:20px !important;
-  border:1px solid rgba(225,236,234,.24) !important;
-  background:linear-gradient(145deg,rgba(24,30,33,.90),rgba(12,16,19,.88) 65%,rgba(10,14,17,.9)) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.085),0 24px 80px rgba(0,0,0,.45) !important;
+body.svAccountEntry .dsAuthBrand {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  color: #f7f8fb;
+  text-decoration: none;
+  font-size: 19px;
+  font-weight: 680;
+  letter-spacing: -.045em;
 }
-/* Make the switch read as two intentional equal tabs, not two labels
-   floating awkwardly inside one outlined capsule. */
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch {
-  display:grid !important;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:4px !important;
-  width:100% !important;
-  min-height:0 !important;
-  padding:4px !important;
-  margin:0 0 28px !important;
-  border:1px solid rgba(218,232,230,.17) !important;
-  border-radius:12px !important;
-  background:rgba(3,7,9,.42) !important;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.2) !important;
+body.svAccountEntry .dsAuthBrand img { width: 32px; height: 32px; object-fit: contain; }
+body.svAccountEntry .svAuthHeaderLinks { display: flex; align-items: center; gap: 12px; }
+body.svAccountEntry .svAuthHeaderLinks > a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: #c1c9d6; font-size: 13px; text-decoration: none;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a {
-  display:grid !important;
-  place-items:center;
-  min-height:34px !important;
-  width:100% !important;
-  padding:7px 11px !important;
-  border-radius:8px !important;
-  color:#9aabad !important;
-  background:transparent !important;
-  font-size:calc(12px * var(--st-ui-scale, 1)) !important;
-  font-weight:550 !important;
-  transition:background-color .18s,color .18s;
+body.svAccountEntry .svAuthHeaderLinks button {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid #ffffff25; border-radius: 10px;
+  color: #dbe4f3; background: #181e2a; cursor: pointer;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a.active {
-  color:#eff7f3 !important;
-  background:linear-gradient(160deg,rgba(226,238,234,.18),rgba(226,238,234,.095)) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 2px 6px rgba(0,0,0,.15) !important;
+body.svAccountEntry .svAuthHeaderLinks button svg { width: 17px; height: 17px; }
+body.svAccountEntry .svAuthHeaderLinks button:hover { background: #242d3e; }
+
+body.svCleanShell.svAccountEntry .dsAuthShellSafe {
+  display: flex !important;
+  flex-direction: column;
+  gap: 16px;
+  width: min(430px, 100%) !important;
+  max-width: 430px !important;
+  min-width: 0;
+  margin: auto !important;
+  padding: 28px 0 0 !important;
+  transform: none;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a.active::after {
-  display:none !important;
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthCard {
+  display: block !important;
+  min-width: 0;
+  width: 100%;
+  padding: clamp(21px, 4vw, 32px) !important;
+  border: 1px solid #ffffff27 !important;
+  border-radius: 20px !important;
+  background: #131820 !important;
+  box-shadow: 0 18px 50px #0006 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthSwitch a:hover:not(.active) {
-  background:rgba(255,255,255,.055) !important;
-  color:#e1ebe6 !important;
+body.svAccountEntry .dsAuthCard::before,
+body.svAccountEntry .dsAuthCard::after { display: none !important; }
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthCard .dsAuthSwitch {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: 100% !important;
+  padding: 4px !important;
+  min-height: 0 !important;
+  margin: 0 0 24px !important;
+  border: 1px solid #ffffff18 !important;
+  border-radius: 11px !important;
+  background: #0c1017 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
-/* Hierarchy improvements without changing headline sizes or spacing. */
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthCard h1 {
-  font-size:calc(clamp(30px,4vw,38px) * var(--st-ui-scale, 1)) !important;
-  line-height:1.12 !important;
-  letter-spacing:-.058em !important;
-  margin:0 0 9px !important;
+body.svAccountEntry .dsAuthSwitch a {
+  display: grid !important; place-items: center;
+  min-height: 44px !important; width: 100% !important; padding: 6px !important;
+  border: 0 !important; border-radius: 8px !important;
+  color: #bdc7d8 !important; background: transparent !important;
+  font-size: 14px; font-weight: 550; text-decoration: none;
+  box-shadow: none !important; transition: color .15s, background-color .15s;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthIntro {
-  color:#a8b9b8 !important;
-  font-size:calc(13px * var(--st-ui-scale, 1)) !important;
-  line-height:1.6 !important;
+body.svAccountEntry .dsAuthSwitch a.active { background: #283245 !important; color: #fff !important; }
+body.svAccountEntry .dsAuthSwitch a:hover { color: #fff !important; }
+body.svAccountEntry .dsAuthSwitch a::after { display: none !important; }
+body.svAccountEntry .dsAuthCard h1 {
+  margin: 0 0 6px !important; padding: 0 !important;
+  color: #f4f7fc !important; font-size: clamp(29px, 4vw, 36px) !important;
+  font-weight: 650; letter-spacing: -.045em; line-height: 1.12; text-transform: none !important;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm {
-  margin-top:28px !important;
-  gap:17px !important;
+body.svAccountEntry .svAuthIntro { margin: 0 !important; color: #b7c2d3; font-size: 14px; line-height: 1.5; }
+
+body.svAccountEntry .dsSafeAuthForm { display: grid; gap: 15px; margin: 24px 0 0 !important; }
+body.svAccountEntry .dsSafeAuthForm label {
+  display: grid; gap: 6px; min-width: 0; margin: 0 !important;
+  color: #dae2ef; font-size: 13px; font-weight: 580; letter-spacing: 0; text-transform: none;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm label {
-  gap:8px !important;
-  font-size:calc(12px * var(--st-ui-scale, 1)) !important;
-  color:#d1ddda !important;
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm input {
+  box-sizing: border-box;
+  display: block; width: 100%; min-height: 48px; padding: 0 12px !important;
+  color: #f4f7fd !important; background: #0c1018 !important;
+  border: 1px solid #ffffff30 !important; border-radius: 10px !important;
+  font: inherit; font-size: 16px; font-weight: 400;
+  box-shadow: none !important; backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important; transition: border-color .15s;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm input {
-  height:51px !important;
-  min-height:51px !important;
-  border:1px solid rgba(217,233,227,.26) !important;
-  border-radius:11px !important;
-  background:rgba(5,10,13,.61) !important;
-  caret-color:#e4f7ee;
-  transition:border-color .18s,background-color .18s,box-shadow .18s;
+body.svAccountEntry .svAuthPasswordField { position: relative; min-width: 0; }
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .svAuthPasswordField input { padding-right: 66px !important; }
+body.svAccountEntry .svAuthPasswordToggle {
+  position: absolute; top: 2px; right: 3px;
+  display: grid; place-items: center; min-width: 54px; min-height: 44px;
+  border: 0; border-radius: 8px; color: #bfcbe0; background: transparent;
+  font-size: 13px; cursor: pointer;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm input:hover {
-  border-color:rgba(230,243,239,.41) !important;
+body.svAccountEntry .svAuthPasswordToggle:hover { color: #fff; background: #ffffff0a; }
+body.svAccountEntry .svAuthHint { margin: -8px 0 0; color: #acb6c6; font-size: 12px; }
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn {
+  display: grid !important; place-items: center; min-height: 48px; width: 100%;
+  padding: 10px 13px !important; margin: 2px 0 0 !important;
+  border: 1px solid transparent !important; border-radius: 10px !important;
+  color: #141925 !important; background: #e9eef8 !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  font-size: 14px; font-weight: 650;
+  cursor: pointer; transition: background-color .15s;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm input:focus-visible {
-  outline:2px solid rgba(220,247,235,.86) !important;
-  outline-offset:1px !important;
-  border-color:#d3efe2 !important;
-  background:rgba(12,19,21,.82) !important;
-  box-shadow:0 0 0 4px rgba(131,202,177,.1) !important;
+body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsSafeAuthForm .dsPrimaryBtn:hover:enabled { background: #fff !important; }
+body.svAccountEntry .dsSafeAuthForm .dsPrimaryBtn:disabled { opacity: .58; cursor: default; }
+body.svAccountEntry main.dsAuthPageSafe :is(a, input, button):focus-visible { outline: 2px solid #b5cdff !important; outline-offset: 3px; }
+body.svAccountEntry .svAuthAvailability {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px;
+  margin-top: 16px; padding: 9px 12px;
+  color: #dce4f4; background: #202a3a; border: 1px solid #a8bde32d; border-radius: 10px;
+  font-size: 13px; line-height: 1.5;
 }
-/* Existing password reveal works on login AND signup. */
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordField {
-  display:block;
-  position:relative;
-  min-width:0;
+body.svAccountEntry .svAuthAvailability[hidden] { display: none; }
+body.svAccountEntry .svAuthAvailability p { flex: 1 1 145px; margin: 0; }
+body.svAccountEntry .svAuthAvailability button {
+  min-height: 44px; padding: 0 6px; border: 0; background: none;
+  color: #deebff; text-decoration: underline; text-underline-offset: 3px;
+  font: inherit; cursor: pointer;
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordField input {
-  padding-right:78px !important;
+body.svAccountEntry .svAuthAvailability button:disabled { opacity: .6; cursor: default; }
+body.svAccountEntry [data-auth-error] { margin: 0; color: #ffc2c1; font-size: 13px; line-height: 1.5; }
+body.svAccountEntry .svAuthNotice { color: #c0ccde; font-size: 13px; }
+body.svAccountEntry .svAuthRecovery { margin: 0; text-align: center; font-size: 13px; }
+body.svAccountEntry .svAuthRecovery a { display: inline-flex; align-items: center; min-height: 44px; color: #c8d4e7; text-underline-offset: 3px; }
+
+@media (max-width: 480px) {
+  body.svCleanShell.svAccountEntry main.dsAuthPageSafe { padding: 0 14px 22px !important; }
+  body.svAccountEntry .svAuthHeaderLinks { gap: 7px; }
+  body.svAccountEntry .svAuthHeaderLinks > a { font-size: 12px; }
+  body.svCleanShell.svAccountEntry .dsAuthShellSafe { padding-top: 14px !important; }
+  body.svCleanShell.svAccountEntry main.dsAuthPageSafe .dsAuthCard { border-radius: 16px !important; }
 }
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordToggle {
-  position:absolute;
-  top:50%;right:9px;
-  transform:translateY(-50%);
-  display:grid;place-items:center;
-  min-width:56px;min-height:34px;
-  padding:4px 9px;
-  border:0;border-radius:8px;
-  background:transparent;
-  color:#b8c8c4;
-  font:550 calc(11px * var(--st-ui-scale, 1))/1 "Host Grotesk",system-ui,sans-serif;
-  cursor:pointer;
-  transition:color .18s,background-color .18s;
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordToggle:hover {
-  color:#f7faf8;
-  background:rgba(255,255,255,.085);
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .svAuthPasswordToggle:focus-visible {
-  outline:2px solid #d5f4e7 !important;
-  outline-offset:1px !important;
-}
-/* No button enlargement. A better surface and tactile feedback only. */
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm .dsPrimaryBtn {
-  height:51px !important;
-  min-height:51px !important;
-  margin:6px 0 0 !important;
-  background:linear-gradient(120deg,#f1f5f1,#dceae4) !important;
-  border:1px solid #f0f9f2 !important;
-  color:#15231e !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 5px 16px rgba(0,0,0,.12) !important;
-  transition:transform .18s,background-color .18s,box-shadow .18s;
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm .dsPrimaryBtn:hover {
-  background:#f8fcf9 !important;
-  box-shadow:0 8px 22px rgba(169,220,201,.13) !important;
-  transform:translateY(-1px);
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsSafeAuthForm .dsPrimaryBtn:active {
-  transform:translateY(0);
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthFinePrint a {
-  text-underline-offset:3px;
-}
-body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthFinePrint a:hover {
-  text-decoration:underline;
-}
-/* Keep both forms equally compact on narrow screens. */
-@media(max-width:480px) {
-  body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage) .dsAuthCard {
-    padding:25px !important;
-    border-radius:17px !important;
-  }
-}
-@media(prefers-reduced-motion:reduce) {
-  body.svCleanShell :is(.svAuthLoginPage,.svAuthSignupPage)
-    :is(input,.dsPrimaryBtn,.dsAuthSwitch a,.svAuthPasswordToggle) {
-    transition:none !important;
-  }
+@media (prefers-reduced-motion: reduce) {
+  body.svAccountEntry :is(input, .dsPrimaryBtn, .dsAuthSwitch a) { transition: none !important; }
 }
