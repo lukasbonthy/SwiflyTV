@@ -40,7 +40,7 @@ const { createConnect } = require("./lib/connect");
 const { createCommunityController } = require("./lib/community");
 const {createMovieNights}=require('./lib/movie-nights');
 const {publicMovieNightSource}=require('./lib/movie-night-source');
-const {movieNightsMarkup}=require('./ui/movie-nights');
+const {movieNightsMarkup,movieNightHomeMarkup}=require('./ui/movie-nights');
 const { createDiscovery } = require("./lib/discovery");
 const { createPlayerAssist } = require("./lib/player-assist");
 const {searchOptions,filterSearch,certification,createCatalogRouter}=require("./lib/catalog-tools");
@@ -5763,7 +5763,7 @@ app.get('/api/movie-nights/:id/player',async(req,res)=>{
 app.get(['/movie-nights','/movie-night/:id'],async(req,res)=>{
   res.set('Cache-Control','private, no-store');res.vary('Cookie');
   let state;try{state=await movieNights.snapshot(req,req.params.id);if(state.code)res.status(503);}catch(error){res.status(error.status||503);state={event:null,upcoming:[],code:error.code,message:error.message};}
-  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event)}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=2"><link rel="stylesheet" href="/assets/community/movie-nights-premiere.css?v=1"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/community/movie-nights.js?v=2"></script><script defer src="/assets/community/movie-nights-premiere-auth.js?v=1"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event)}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=3"><link rel="stylesheet" href="/assets/community/movie-nights-auth.css?v=1"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/community/movie-nights.js?v=3"></script><script defer src="/assets/community/movie-nights-auth.js?v=1"></script>'}));
 });
 app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
 app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
@@ -7895,7 +7895,7 @@ async function homePage(req, res) {
         <div id="continueWatchingRail" class="svResumeRail" aria-label="Continue Watching titles"></div>
       </section>
       ${feedHome()}
-      <a class="svMovieNightFeature" href="/movie-nights">${cleanIcon('film')}<span><strong>Movie Nights</strong><span>Choose the feature. Watch together.</span></span><span class="svMovieNightFeatureAction">Explore screenings ${catalogIcon('arrow')}</span></a>
+      ${movieNightHomeMarkup(movieNights.homePreview())}
       ${rows.map(row=>dsRail(row.title,row.items,row.type,{viewHref:row.href,studioKey:row.key,...(row.period?{period:row.period}:row.key==='popular-movies'?{period:{base:homePeriodBase,home:true,parameter:'moviePeriod',selected:period}}:{})})).join('')}
     </section>
   </main>`;

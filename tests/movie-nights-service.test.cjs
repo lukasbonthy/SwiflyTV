@@ -77,6 +77,36 @@ test('a storage outage yields unavailable state without reaching the catalogue o
   assert.deepEqual(h.calls, []);
 });
 
+test('Home uses the latest public ballot and falls back to the schedule during an outage', async t => {
+  const h = await setup(t);
+  const {event} = await h.service.snapshot(h.request('alice'));
+  const base = await listen(h.server);
+  const film = event.candidates.at(-1);
+  assert.equal((await post(base, '/' + event.id + '/vote', {movieId: film.id})).status, 200);
+  const read = h.store.read;
+  const write = t.mock.method(h.store, 'transaction');
+  const brokenRead = t.mock.method(h.store, 'read', async () => { throw new Error('storage offline'); });
+  const before = h.catalog.calls.length;
+  const preview = h.service.homePreview();
+  assert.equal(preview.id, event.id);
+  assert.equal(preview.phase, 'voting');
+  assert.equal(preview.candidates.find(row => row.id === film.id).votes, 1);
+  assert.deepEqual(Object.keys(preview).sort(), ['candidates','id','phase','startsAt','timeZone','viewers','winner']);
+  assert.equal(h.service.homePreview(), preview);
+  assert.equal(brokenRead.mock.callCount(), 0);
+  assert.equal(write.mock.callCount(), 0);
+  assert.equal(h.catalog.calls.length, before);
+  assert.deepEqual(h.calls, []);
+  await h.service.tick();
+  const schedule = h.service.homePreview();
+  assert.equal(schedule.phase, 'unavailable');
+  assert.equal(schedule.startsAt, event.startsAt);
+  assert.deepEqual(schedule.candidates, []);
+  h.store.read = read;
+  await h.service.tick();
+  assert.equal(h.service.homePreview().phase, 'voting');
+});
+
 test('a catalogue outage never creates an empty persisted ballot', async t => {
   const h = await setup(t, {tmdb: async () => ({__error: true})});
   const snapshot = await h.service.snapshot(h.request());

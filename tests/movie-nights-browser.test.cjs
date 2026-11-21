@@ -86,17 +86,52 @@ test('a real account changes its ballot once and sends safely rendered persisten
 });
 test('real Home period menus update only their native React rails and preserve the hero',{skip:!available,timeout:90000},async t=>{
  const f=await open(t);await f.page.goto(origin+'/');await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
+ const feature=f.page.locator('[data-home-movie-night]');
+ assert.equal(await feature.locator('.svHomeNightMore').getAttribute('href'),'/movie-nights');
+ assert.match(await feature.locator('.svHomeNightSpotlight').getAttribute('href'),/^\/movie-night\//);
  const row=f.page.locator('[data-st-home-section="trending-movies"]'),other=f.page.locator('[data-st-home-section="trending-tv"]');await row.locator('summary').scrollIntoViewIfNeeded();const before=await f.page.evaluate(()=>{window.__nightHero=document.querySelector('.dsHero');return document.querySelector('.dsHero')?.getAttribute('class');});await row.locator('summary').click();await row.locator('.svPeriodMenu a').filter({hasText:'Today'}).click();await f.page.waitForFunction(()=>document.querySelector('[data-st-home-section="trending-movies"] summary span')?.textContent==='Today');assert(await f.page.evaluate(()=>window.__nightHero===document.querySelector('.dsHero')));assert.equal(await other.locator('summary span').textContent(),'This Week');assert.equal(await row.locator('[data-sv-react-rail]').count(),1);assert.equal(await f.page.evaluate(()=>document.querySelector('[data-st-home-section="trending-movies"] .svPeriodTrigger').classList.contains('svGlassControl')),false);await row.locator('summary').click();await f.page.waitForFunction(()=>{const picker=document.querySelector('[data-st-home-section="trending-movies"] [data-movie-periods]');return picker?.dataset.periodState==='open'&&getComputedStyle(picker.querySelector('.svPeriodMenu')).opacity==='1';});assert.equal(await row.locator('.svPeriodMenu').evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(24, 24, 24)');await shot(f.page,'home-period-open');await row.locator('summary').press('Escape');assert.deepEqual(f.errors,[]);assert(before);
 });
 
-test('premiere staging and first-party account panel remain usable on desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+test('Home fits the screening artwork and deep links to real ballot picks on desktop and phone',{skip:!available,timeout:90000},async t=>{
+ const {event,schedule}=await api.movieNights.snapshot({headers:{}},voteId);
+ assert.equal(event.phase,'voting');
+ // Showcase the open ballot independently of the simultaneously live test fixture.
+ const {id,startsAt,phase,candidates,winner,viewers}=event;
+ t.mock.method(api.movieNights,'homePreview',()=>({id,startsAt,phase,candidates,winner,viewers,timeZone:schedule.timeZone}));
+ const leader=candidates.reduce((first,film)=>film.votes>first.votes?film:first);
+ const firstPick=candidates.find(film=>film.id!==leader.id);
  for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
   const f=await open(t,width,height);
-  await f.page.locator('.nightPremiereExperience').waitFor();
-  const marquee=await f.page.locator('.nightPremiereExperience').boundingBox();
-  assert(marquee&&marquee.width>250&&marquee.x>=0&&marquee.x+marquee.width<=width+.5,JSON.stringify({label,marquee}));
-  const heading=await f.page.locator('.nightPremiereTitle').textContent();
-  assert.match(heading,/lights go down/i);
+  await f.page.goto(origin+'/');
+  await f.page.waitForFunction(()=>document.documentElement.dataset.swiflyReact==='ready'&&!document.documentElement.hasAttribute('data-sv-loading'));
+  const feature=f.page.locator('[data-home-movie-night]');
+  const spotlight=feature.locator('.svHomeNightSpotlight');
+  assert.equal(await spotlight.getAttribute('href'),'/movie-night/'+voteId+'#nightBallotTitle');
+  assert.equal(await spotlight.locator('strong').textContent(),leader.title);
+  assert.equal(await feature.locator('.svHomeNightBallot li').count(),3);
+  await feature.scrollIntoViewIfNeeded();
+  await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-home-movie-night] img')).every(img=>img.complete&&img.naturalWidth>0));
+  const box=await spotlight.boundingBox();
+  assert(box&&box.width>250&&box.height>=200&&box.x>=0&&box.x+box.width<=width+.5,JSON.stringify({label,box}));
+  assert(await f.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;
+  if(dir){
+   fs.mkdirSync(dir,{recursive:true});
+   await feature.screenshot({path:path.join(dir,'movie-nights-'+label+'-home-feature.png')});
+  }
+  await feature.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true}).click();
+  assert.equal(new URL(f.page.url()).hash,'#night-film-'+firstPick.id);
+  assert.equal(await f.page.locator('#night-film-'+firstPick.id).count(),1);
+  assert.deepEqual(f.errors,[]);
+ }
+});
+
+test('the screening stage and account dialog fit desktop and a narrow phone',{skip:!available,timeout:120000},async t=>{
+ for(const [label,width,height] of [['desktop',1440,1050],['small-phone',320,800]]){
+  const f=await open(t,width,height);
+  const stage=await f.page.locator('[data-night-stage]').boundingBox();
+  const heading=await f.page.locator('.nightPageTop h1').boundingBox();
+  assert(stage&&heading&&stage.width>250&&stage.x>=0&&stage.x+stage.width<=width+.5&&stage.y>heading.y&&stage.y<height/2,JSON.stringify({label,stage,heading}));
   await f.page.locator('[data-night-auth-open="signup"]').click();
   await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
   const dialog=await f.page.locator('[data-night-auth-overlay] [role="dialog"]').boundingBox();

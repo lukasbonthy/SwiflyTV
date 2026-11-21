@@ -357,6 +357,11 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
 }
 /* Short televisions keep the complete row heading, original poster ratio,
    two caption lines, and the controller strip inside one safe composition. */
+@media (min-width:1101px) {
+  /* Keep the first gallery in the controller safe frame. */
+  html[data-sv-tv="true"] body.svCleanShell [data-st-home-rows] {display:grid; grid-template-columns:minmax(0,1fr);}
+  html[data-sv-tv="true"] body.svCleanShell [data-st-home-rows] > .svMovieNightFeature {order:1;}
+}
 @media (min-width:1101px) and (max-height:800px) {
   html[data-sv-tv="true"] body.svCleanShell {
     --sv-tv-guide-height:56px;
@@ -370,9 +375,6 @@ html[data-sv-tv="true"] body.svCleanShell #swiflyTvHint kbd {display:inline-bloc
   html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightOverview,
   html[data-sv-tv="true"] body.svCleanShell .svTvSpotlightHint {display:none;}
   html[data-sv-tv="true"] body.svCleanShell .dsHeroContent h1 {font-size:calc(clamp(46px,4vw,64px) * var(--st-ui-scale, 1)) !important;}
-  /* Keep the first gallery in the featured frame on 720p televisions. */
-  html[data-sv-tv="true"] body.svCleanShell [data-st-home-rows] {display:grid; grid-template-columns:minmax(0,1fr);}
-  html[data-sv-tv="true"] body.svCleanShell [data-st-home-rows] > .svMovieNightFeature {order:1;}
   html[data-sv-tv="true"] body.svCleanShell :is(.svSectionHead,.dsRowHead) {min-height:44px !important; margin-bottom:8px !important;}
   html[data-sv-tv="true"] body.svCleanShell .svSectionHead.svPeriodSection {margin-bottom:4px !important;}
   html[data-sv-tv="true"] body.svCleanShell .svSectionHead .svPeriodTrigger {min-height:44px;}

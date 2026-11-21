@@ -1,0 +1,38 @@
+.svNightPage .nightAuthOverlay {
+  position: fixed; z-index: 10050; inset: 0; display: grid; place-items: center;
+  padding: 16px; background: #06070bdc;
+}
+.nightAuthPanel {
+  position: relative; overflow-y: auto; overscroll-behavior: contain;
+  max-height: calc(100dvh - 32px); width: min(100%, 460px); padding: 25px;
+  border: 1px solid #ffffff26; border-radius: 15px; background: #15181e; box-shadow: 0 24px 90px #0009;
+}
+.nightAuthClose {
+  position: absolute; right: 12px; top: 12px; width: 44px; height: 44px;
+  border: 1px solid #ffffff1c; border-radius: 9px; background: #1c212a;
+  color: #e7eaf1; font: inherit; font-size: 24px; line-height: 1;
+}
+.nightAuthPanel h2 { margin: 0 43px 8px 0; font-size: 25px; font-weight: 600; line-height: 1.15; letter-spacing: -.03em; }
+.nightAuthPanel > p { color: #b1bac8; margin: 0 0 16px; font-size: 13px; line-height: 1.55; }
+.nightAuthModes {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
+  padding: 4px; margin-bottom: 16px; background: #101318; border: 1px solid #ffffff16; border-radius: 9px;
+}
+.nightAuthModes button { min-height: 44px; border: 0; border-radius: 7px; background: none; color: #b6bfcc; font: inherit; font-size: 13px; }
+.nightAuthModes button[aria-selected=true] { background: #282e39; color: #fafbfc; }
+.nightAuthForm, .nightAuthForm label { display: grid; gap: 10px; min-width: 0; }
+.nightAuthForm label { gap: 5px; color: #d4dae3; font-size: 13px; }
+.nightAuthForm input {
+  width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid #ffffff28;
+  background: #101318; color: #f3f5f8; border-radius: 8px; font: inherit; font-size: 16px;
+}
+.nightAuthTwoFields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.nightAuthHint { margin: 0; color: #a8b2c1; font-size: 12px; }
+.nightAuthError { margin: 0; padding: 10px; border: 1px solid #e0666d64; background: #381e28; color: #ffd7d9; border-radius: 7px; font-size: 13px; }
+.nightAuthSubmit { min-height: 44px; width: 100%; background: #edf0f5; color: #15181e; border: 0; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 600; }
+.nightAuthSubmit:disabled { opacity: .55; }
+@media (max-width: 400px) {
+  .nightAuthPanel { padding: 18px; }
+  .nightAuthPanel h2 { font-size: 22px; }
+  .nightAuthTwoFields { grid-template-columns: minmax(0, 1fr); }
+}

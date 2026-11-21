@@ -2,7 +2,7 @@
 const {periodDefinitions,moviePeriod,pageHref}=require('../lib/catalog-experience');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=name=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+({globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18Z',arrow:'M5 12h14M12 5l7 7-7 7',film:'M4 3h16v18H4zM4 8h16M4 16h16M8 3v5M16 3v5M8 16v5M16 16v5',search:'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',spark:'m12 3 2.7 6.3L21 12l-6.3 2.7L12 21l-2.7-6.3L3 12l6.3-2.7Z'}[name]||'')+'"/></svg>';
-const catalogAssets='<link rel="stylesheet" href="/assets/clean/catalog-experience.css?v=7"><script defer src="/assets/clean/catalog-experience.js?v=5"></script>';
+const catalogAssets='<link rel="stylesheet" href="/assets/clean/catalog-experience.css?v=8"><script defer src="/assets/clean/catalog-experience.js?v=5"></script>';
 function periodControls({base='/movies',selected='week',parameter='period',title='Popular movies',inRow=false,viewHref='',headingId='',type='movie',refresh=false,home=false}={}){
  selected=moviePeriod(selected);
  const tag=inRow?'div':'section',id='svMoviePeriods-'+parameter.replace(/[^a-z0-9_-]/gi,''),current=periodDefinitions[selected];
