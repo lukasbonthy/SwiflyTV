@@ -2,7 +2,13 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Movie Nights screening room
+## Current release — Home Movie Nights showcase
+
+- **Production:** [PR #175](https://github.com/lukasbonthy/SwiflyTV/pull/175) shipped application commit `4ecfc2fca32d925697a79ae4e97a1c7ee1f7627e` and tested tree `cb524fd058d292355fd3addce2bf707aa8a096cd` as Render deployment `dep-dc10umu417fc73b31img`. It went live November 21 at 4:39 p.m. Eastern (`2026-11-21T21:39:27.0297Z`). This deployment restarted temporary accounts. Production HTTP confirmed the existing Home, Movie Nights and catalog stylesheet access gate.
+- **Home feature:** The featured film and ballot now share one frame. The film has a larger title and backdrop, and candidate posters keep their full 2:3 proportions. Each pick keeps its ballot deep link. The lineup stacks below the spotlight on phones. Failed candidate and featured posters use the bundled cover. A failed backdrop leaves the dark event background.
+- **Verification:** 74 focused local checks passed. [Hosted QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44952341818) passed the build and all 13 Chromium cases. Home tests covered deep links, artwork failures, the outage cover, full title and same-row header at 320 px, and both Home renderers. Reviewed desktop and final phone screenshots. The live page requires site access. This checkpoint is separate from the running application.
+
+## Prior release — Movie Nights screening room
 
 - **Production:** [PR #174](https://github.com/lukasbonthy/SwiflyTV/pull/174) shipped application commit `c500759c3b9a84e8e50631ac9557ef7bd65f92b3` and tested tree `0d4be94963f8e1a2c6e20e6ac7eae716ec347a9c` as Render deployment `dep-dc10irnlk1mc73fv9i70`. It went live November 21 at 4:14 p.m. Eastern (`2026-11-21T21:14:13.604112Z`). This deployment restarted the temporary account store. The existing site gate passed production HTTP checks.
 - **Screening UI:** Movie Nights keeps the lobby and player in a stable 16:9 frame. Watch controls and viewer presence stay below it, with chat alongside on desktop and directly underneath on phones. Chat opens at showtime on phones unless the viewer has chosen to collapse it. The condensed ballot identifies the winner and retains the reader's own vote when voting closes. The bundled event art covers missing or failed backdrops.
