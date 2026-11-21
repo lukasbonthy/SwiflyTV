@@ -1,5 +1,13 @@
 # SwiflyTV working checkpoint
 
+## November 21, 2026 — Movie Nights opening-night presentation and native sign-in review
+
+- Active review branch: `feat/movie-nights-theater-firstparty-20261121`. Draft pull request: https://github.com/lukasbonthy/SwiflyTV/pull/168. **Do not treat this as merged or deployed.** Production remains on the protected main branch; Render auto-deploys main and PR previews are disabled.
+- The existing server-side Movie Nights schedule, account ballots, synchronous playback, source retry, live chat, reconnection and personal Resume Live are preserved. New scoped presentation adds a theater-bulb marquee, velvet curtain framing, premiere admission pass, ticket-styled votes, matching gold/burgundy live layout, and reduced-motion/mobile rules.
+- Added in-place first-party account signup/login on Movie Nights using the **existing** `/api/connect/session` and `/api/connect/auth/{signup,login}` endpoints and the existing session identity model. No external identity provider, no browser-stored password, and a POST-only non-JavaScript form fallback. Password storage/security remains the existing salted scrypt implementation, hashed server-side session tokens, Secure/HttpOnly/SameSite cookies on HTTPS, same-origin JSON write enforcement and rate limits. Production registration still requires durable Postgres/disk with backups and verification/recovery readiness; do not claim deployed auth availability without checking it.
+- New files: `public/community/movie-nights-premiere.css`, `public/community/movie-nights-premiere-auth.js`, `tests/movie-nights-premiere.test.cjs`. Edited `ui/movie-nights.js`, `server.js`, `tests/movie-nights-browser.test.cjs`, and `.github/workflows/check.yml` to include real Chromium marquee/modal checks and screenshot artifacts.
+- Static parser checks were passed for changed JS. The earlier GitHub Actions UI run failed one new test at the sign-in tab interaction; source commit `9d71bb1b94a33a96798dc4dccd211a6ea10c57a2` updated tab handling. Full updated Actions and browser validations have not yet completed when this checkpoint was written; keep PR draft until successful evidence is inspected.
+
 Updated: November 20, 2026 (UTC).
 
 ## Active Movie Nights and screenshot corrections
