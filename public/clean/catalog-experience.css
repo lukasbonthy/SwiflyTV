@@ -58,109 +58,152 @@ html[data-sv-tv=true] :is(.svPeriodTrigger,.svPeriodMenu a){min-height:52px}
 .svPeriodStatus:empty{display:none}.svPeriodStatus{font-size:12px;color:#aaa;margin:12px 0 0}.svCatalogRow[aria-busy=true] .movieRail{opacity:.58;transition:opacity .16s ease}.svPeriodHeading{align-items:baseline}.svPeriodPicker>.svPeriodTrigger{letter-spacing:inherit}
 
 
-/* A featured screening uses the same gutter and artwork as the Home galleries. */
+/* The Home screening and its ballot share a single backdrop and frame. */
 .svMovieNightFeature {
-  --night-accent: var(--st-accent-solid, #22d3ee);
-  margin: 0 0 42px;
-  color: #f2f3f5;
+  --night-accent: var(--st-accent-solid, #7fdef5);
+  --night-gutter: clamp(16px, 2.6vw, 40px);
+  margin: 0 clamp(4px, 1.1vw, 20px) 42px;
+  color: #f5f7fc;
 }
 .svMovieNightFeature a { color: inherit; text-decoration: none; }
 .svMovieNightFeature a:focus-visible { outline: 2px solid var(--night-accent); outline-offset: 3px; }
 .svMovieNightFeature svg { width: 16px; height: 16px; flex: none; }
-.svHomeNightHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-body.svCleanShell .svHomeNightHead h2 { margin: 0; font-size: calc(24px * var(--st-ui-scale, 1)); line-height: 1.25; font-weight: 600; letter-spacing: -.025em; }
-.svHomeNightMore { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 13px; color: #b4bbc7 !important; }
-.svHomeNightMore:hover { color: #fff !important; }
-
-.svHomeNightLayout { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
-.svHomeNightLayout.hasBallot { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); }
-.svHomeNightSpotlight {
-  min-width: 0; position: relative; isolation: isolate; overflow: clip;
-  display: grid; grid-template-columns: minmax(0, 1fr) clamp(128px, 15vw, 196px);
-  align-items: center; gap: clamp(14px, 3vw, 42px); padding: clamp(20px, 3vw, 40px);
-  border: 1px solid #ffffff23; border-radius: 14px;
-  background: radial-gradient(ellipse at 84% 30%, #203454, transparent 67%), #10141c;
-  transition: border-color .18s ease;
+.svHomeNightProgram {
+  position: relative; isolation: isolate; overflow: clip;
+  border: 1px solid #a6bedb33; border-radius: 18px;
+  background: radial-gradient(ellipse at 43% 12%, #283850, transparent 62%), #111823;
+  box-shadow: 0 16px 40px #0005;
 }
-.svHomeNightSpotlight.hasBackdrop { padding: clamp(20px, 2vw, 28px); }
-.svHomeNightSpotlight.hasBackdrop::after {
-  content: ''; position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(90deg, #0b0e15eb 5%, #0b0e158c 45%, transparent 90%),
-    linear-gradient(0deg, #0a0c13f2, #0a0c1300 75%);
+.svHomeNightProgram::after {
+  position: absolute; z-index: -1; inset: 0; content: ''; pointer-events: none;
+  background: linear-gradient(90deg, #0b101ddf, #0b101d78 32%, #11182322 60%, #111823 83%),
+    linear-gradient(0deg, #0d1422d9, transparent 57%, #0c101a71);
 }
-.svHomeNightSpotlight:hover { border-color: #ffffff58; }
 .svHomeNightArt {
-  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover;
-  object-position: center 40%; transition: transform .28s ease;
+  position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  object-position: center 40%; transition: transform .35s ease-out;
+}
+.svHomeNightProgram.hasBallot .svHomeNightArt { width: 80%; }
+.svMovieNightFeature [hidden] { display: none !important; }
+.svHomeNightHead {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 4px 12px; min-height: 60px; padding: 6px var(--night-gutter);
+  border-bottom: 1px solid #a6bedb27; background: #0c111bc7;
+}
+body.svCleanShell .svHomeNightHead h2 {
+  margin: 0; font-size: calc(clamp(20px, 2vw, 28px) * var(--st-ui-scale, 1));
+  line-height: 1.15; font-weight: 650; letter-spacing: -.04em;
+}
+.svHomeNightMore {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  color: #d2dcea !important; font-size: 13px; font-weight: 550;
+  transition: color .15s ease;
+}
+.svHomeNightMore:hover { color: #fff !important; }
+.svHomeNightMore svg { color: #b5c6dc; }
+
+.svHomeNightLayout { display: grid; grid-template-columns: minmax(0, 1fr); }
+.svHomeNightProgram.hasBallot .svHomeNightLayout { grid-template-columns: minmax(0, 1fr) clamp(308px, 32%, 530px); }
+.svHomeNightSpotlight {
+  position: relative; min-width: 0; display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1fr) clamp(122px, 12.6vw, 194px);
+  gap: clamp(14px, 3.1vw, 48px); padding: clamp(20px, 2.6vw, 39px) var(--night-gutter);
+}
+.svHomeNightSpotlight:focus-visible { outline-offset: -4px !important; }
+.svHomeNightCopy { display: grid; justify-items: start; gap: 11px; min-width: 0; }
+.svHomeNightState {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 27px; max-width: 100%; padding: 3px 9px;
+  border: 1px solid #c2d8f530; border-radius: 6px; background: #111c2de8;
+  color: #e4edf9; font-size: 12px; font-weight: 620; line-height: 1.35;
+}
+.svHomeNightState i { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--night-accent); }
+[data-home-night-phase="live"] .svHomeNightState i { background: #ff7e93; }
+[data-home-night-phase="unavailable"] .svHomeNightState i { background: #a9b7ca; }
+.svHomeNightCopy > strong {
+  display: block; max-width: 22ch; overflow-wrap: anywhere; color: #fbfdff;
+  font-size: clamp(28px, 4.7vw, 70px); font-weight: 700; line-height: 1.02; letter-spacing: -.055em;
+  text-shadow: 0 2px 12px #0005;
+}
+.svHomeNightFacts { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; color: #d5deec; font-size: 13px; line-height: 1.45; }
+.svHomeNightFacts > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.svHomeNightFacts svg { width: 14px; height: 14px; color: #b2c3da; }
+.svHomeNightAction {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; padding: 8px 13px; margin-top: 3px; border-radius: 8px;
+  background: #e4edf8; color: #111b2b; font-size: 13px; font-weight: 680;
+  transition: background-color .2s ease;
+}
+.svHomeNightSpotlight:hover .svHomeNightAction { background: #fff; }
+.svHomeNightAction svg { transition: transform .2s ease; }
+.svHomeNightPoster, .svHomeNightPickFrame {
+  position: relative; display: block; min-width: 0; aspect-ratio: 2 / 3; margin: 0; overflow: hidden;
+  border: 1px solid #b6c9e84d; background: #1b2a40;
 }
 .svHomeNightPoster {
-  position: relative; min-width: 0; aspect-ratio: 2 / 3; margin: 0; overflow: hidden;
-  background: #0a1222; border: 1px solid #a1bed54a; border-radius: 9px;
-  box-shadow: 0 12px 30px #0008; transform: translateY(0);
-  transition: transform .22s ease, border-color .22s ease;
+  border-radius: 10px; box-shadow: 0 14px 29px #0009;
+  transition: transform .25s ease, border-color .2s ease;
 }
-.svHomeNightPoster img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.svHomeNightPoster img, .svHomeNightPickFrame img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .svHomeNightPoster.isEventPoster::after {
-  content: ''; position: absolute; inset: 45% 0 0;
-  background: linear-gradient(transparent, #050a14df);
+  position: absolute; inset: 45% 0 0; content: ''; background: linear-gradient(transparent, #060b16ed);
 }
 .svHomeNightPosterTitle { display: none; }
 .svHomeNightPoster.isEventPoster .svHomeNightPosterTitle {
-  display: block; position: absolute; z-index: 1; inset: auto 10% 10%; color: #f2f4ff;
-  font-size: clamp(19px, 3vw, 39px); line-height: .88; letter-spacing: -.055em;
-  text-transform: uppercase; font-weight: 850;
+  position: absolute; z-index: 1; inset: auto 10% 9%; display: block; color: #eef5ff;
+  font-size: clamp(17px, 2.7vw, 36px); font-weight: 750; line-height: .96; letter-spacing: -.045em;
 }
-.svHomeNightCopy { position: relative; display: grid; justify-items: start; gap: 9px; min-width: 0; max-width: 49ch; }
-.svHomeNightState { display: inline-flex; align-items: center; gap: 7px; color: #dce3ee; font-size: 12px; font-weight: 550; }
-.svHomeNightState i { width: 6px; height: 6px; border-radius: 50%; background: var(--night-accent); }
-[data-home-night-phase="live"] .svHomeNightState i { background: #ff7580; }
-[data-home-night-phase="unavailable"] .svHomeNightState i { background: #a2acbc; }
-.svHomeNightCopy > strong {
-  font-size: clamp(26px, 3.2vw, 44px); font-weight: 600; line-height: 1.08; letter-spacing: -.045em;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+
+.svHomeNightBallot {
+  display: grid; align-content: center; min-width: 0; padding: clamp(15px, 1.8vw, 27px);
+  border-inline-start: 1px solid #a6bedb26;
+  background: linear-gradient(145deg, #121b2be8, #182333f2 60%, #15202ded);
 }
-.svHomeNightFacts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: #c4cbd6; font-size: 13px; line-height: 1.45; }
-.svHomeNightAction {
-  display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 8px 13px; margin-top: 4px;
-  border-radius: 9px; background: #eff1f4; color: #15191f; font-size: 13px; font-weight: 600;
-}
-.svHomeNightSpotlight:hover .svHomeNightAction { background: #fff; }
-.svHomeNightBallot { display: grid; align-content: center; min-width: 0; border: 1px solid #ffffff1a; border-radius: 14px; padding: 14px; background: #111419; }
-.svHomeNightBallot h3 { margin: 0 0 10px; font-size: 14px; font-weight: 550; }
-.svHomeNightBallot ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.svHomeNightBallot h3 { margin: 0 0 12px; color: #e8eff9; font-size: 15px; font-weight: 640; line-height: 1.25; letter-spacing: -.018em; }
+.svHomeNightBallot ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1vw, 14px); margin: 0; padding: 0; list-style: none; }
 .svHomeNightBallot li { min-width: 0; }
-.svHomeNightBallot a { display: grid; gap: 6px; min-height: 44px; border-radius: 8px; }
-.svHomeNightBallot img { width: 100%; height: auto; aspect-ratio: 2 / 3; max-height: 190px; object-fit: cover; border-radius: 8px; background: #232934; transition: opacity .16s; }
-.svHomeNightBallot a:hover img { opacity: .82; }
-.svHomeNightBallot a span { color: #dde1e8; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
-@media (hover:hover) and (pointer:fine) {
-  .svHomeNightSpotlight:hover .svHomeNightArt { transform: scale(1.025); }
-  .svHomeNightSpotlight:hover .svHomeNightPoster { transform: translateY(-3px); border-color: #c4dcff95; }
+.svHomeNightBallot a { display: block; border-radius: 8px; }
+.svHomeNightPickFrame { border-radius: 8px; box-shadow: 0 7px 18px #05080c61; transition: border-color .18s ease; }
+.svHomeNightPickFrame img { transition: transform .25s ease-out; }
+.svHomeNightPickName {
+  display: flex; justify-content: space-between; align-items: start; gap: 3px; margin-top: 8px;
+  color: #e0e9f7; font-size: 13px; font-weight: 550; line-height: 1.3; overflow-wrap: anywhere;
 }
-@media (max-width: 800px) {
-  .svHomeNightLayout.hasBallot { grid-template-columns: minmax(0, 1fr); }
-  .svHomeNightBallot ul { max-width: 600px; }
+.svHomeNightPickName svg { width: 13px; height: 13px; color: #a9bed9; margin-top: 2px; }
+.svHomeNightBallot a:hover .svHomeNightPickName { color: #fff; }
+.svHomeNightBallot a:hover .svHomeNightPickFrame { border-color: #b6daf6bb; }
+
+@media (hover:hover) and (pointer:fine) {
+  .svHomeNightProgram:has(.svHomeNightSpotlight:hover) .svHomeNightArt { transform: scale(1.025); }
+  .svHomeNightSpotlight:hover .svHomeNightPoster { transform: translateY(-3px); border-color: #c0dbf6b9; }
+  .svHomeNightSpotlight:hover .svHomeNightAction svg { transform: translateX(2px); }
+  .svHomeNightBallot a:hover .svHomeNightPickFrame img { transform: scale(1.035); }
+}
+@media (max-width: 850px) {
+  .svHomeNightProgram.hasBallot .svHomeNightLayout { grid-template-columns: minmax(0, 1fr); }
+  .svHomeNightProgram.hasBallot .svHomeNightArt { width: 100%; height: 70%; }
+  .svHomeNightBallot { border-inline-start: 0; border-top: 1px solid #a6bedb29; background: #162131; }
+  .svHomeNightBallot ul { max-width: 520px; }
 }
 @media (max-width: 620px) {
-  .svMovieNightFeature { margin-bottom: 32px; }
-  body.svCleanShell .svHomeNightHead h2 { font-size: calc(20px * var(--st-ui-scale, 1)); }
+  .svMovieNightFeature { --night-gutter: 12px; margin: 0 4px 32px; }
+  .svHomeNightProgram { border-radius: 13px; }
+  .svHomeNightHead { min-height: 49px; padding-block: 2px; }
   .svHomeNightMore { gap: 5px; font-size: 12px; }
-  .svHomeNightSpotlight, .svHomeNightSpotlight.hasBackdrop {
-    min-height: 205px; grid-template-columns: minmax(0, 1fr) minmax(85px, 34%);
-    gap: 12px; padding: 14px; border-radius: 11px;
-  }
-  .svHomeNightPoster { border-radius: 7px; }
-  .svHomeNightCopy > strong {
-    display: block; overflow: visible; font-size: clamp(22px, 6.4vw, 34px);
-  }
-  .svHomeNightAction { padding-inline: 8px; font-size: 12px; gap: 4px; }
-  .svHomeNightCopy { gap: 7px; }
+  .svHomeNightMore svg { width: 14px; height: 14px; }
+  .svHomeNightSpotlight { min-height: 217px; grid-template-columns: minmax(0, 1fr) clamp(82px, 30vw, 136px); gap: 11px; padding-block: 15px; }
+  .svHomeNightCopy { gap: 8px; }
+  .svHomeNightCopy > strong { font-size: clamp(23px, 6.4vw, 37px); line-height: 1.06; }
+  .svHomeNightState { min-height: 25px; padding-inline: 6px; font-size: 11px; }
   .svHomeNightFacts { font-size: 12px; }
-  .svHomeNightBallot { border-radius: 11px; padding: 11px; }
-  .svHomeNightBallot ul { gap: 8px; }
-  .svHomeNightBallot a span { font-size: 12px; }
+  .svHomeNightFacts svg { width: 12px; height: 12px; }
+  .svHomeNightAction { padding-inline: 9px; gap: 5px; margin-top: 1px; font-size: 12px; }
+  .svHomeNightPoster, .svHomeNightPickFrame { border-radius: 7px; }
+  .svHomeNightBallot { padding: 12px var(--night-gutter) 14px; }
+  .svHomeNightBallot h3 { margin-bottom: 8px; font-size: 13px; }
+  .svHomeNightPickName { margin-top: 5px; font-size: 12px; }
+  .svHomeNightPickName svg { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .svHomeNightArt, .svHomeNightSpotlight, .svHomeNightPoster, .svHomeNightBallot img { transition: none !important; }
+  .svHomeNightProgram *, .svHomeNightProgram img { transition: none !important; transform: none !important; }
 }
-body.reduceMotion :is(.svHomeNightArt, .svHomeNightSpotlight, .svHomeNightPoster, .svHomeNightBallot img) { transition: none !important; }
+body.reduceMotion .svHomeNightProgram :is(img, a, figure, span, svg) { transition: none !important; transform: none !important; }

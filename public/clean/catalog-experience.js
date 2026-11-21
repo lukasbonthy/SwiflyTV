@@ -111,15 +111,29 @@
   document.addEventListener('pointerdown',event=>{for(const control of controls)if(!control.picker.contains(event.target))control.close();});
   document.addEventListener('focusin',event=>{for(const control of controls)if(!control.picker.contains(event.target))control.close();});
  }
- const poster=document.querySelector('.svHomeNightPoster img[data-night-event-cover]');
- if(poster){
-  const showEventCover=()=>{
-   poster.parentElement.classList.add('isEventPoster');
-   poster.src=poster.dataset.nightEventCover;
-   delete poster.dataset.nightEventCover;
-  };
-  if(poster.complete&&!poster.naturalWidth)showEventCover();
-  else poster.addEventListener('error',showEventCover,{once:true});
+ function onArtworkFailure(image,fallback){
+  function fail(){
+   image.removeEventListener('error',fail);
+   fallback();
+  }
+  image.addEventListener('error',fail);
+  // A failed cached request may have dispatched its error before this script ran.
+  if(image.complete&&image.naturalWidth===0&&image.getAttribute('src'))fail();
+ }
+ for(const feature of document.querySelectorAll('.svMovieNightFeature')){
+  for(const poster of feature.querySelectorAll('img[data-night-event-cover]')){
+   const cover=poster.dataset.nightEventCover;
+   if(!cover)continue;
+   onArtworkFailure(poster,()=>{
+    poster.parentElement?.classList.add('isEventPoster');
+    delete poster.dataset.nightEventCover;
+    poster.removeAttribute('srcset');
+    poster.src=cover;
+   });
+  }
+  for(const backdrop of feature.querySelectorAll('img[data-night-backdrop]')){
+   onArtworkFailure(backdrop,()=>{backdrop.hidden=true;});
+  }
  }
  const root=document.querySelector('.svLanguagePage'),input=root?.querySelector('[data-language-search]');
  if(!input)return;

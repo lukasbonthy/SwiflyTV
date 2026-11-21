@@ -59,37 +59,38 @@ function movieNightHomeMarkup(event) {
   const candidates = open ? (event.candidates || []).filter(film => filmId(film.id) && film.id !== leader?.id).slice(0, 3) : [];
   const image = artwork(leader?.backdrop);
   const filmPoster = artwork(leader?.poster);
-  const state = event?.phase === 'unavailable' && !leader ? 'Voting temporarily unavailable' : phaseLabel(event);
+  const state = event?.phase === 'unavailable' && !leader ? 'Voting temporarily unavailable' : live ? 'Live now' : phaseLabel(event);
   const date = asTime(event?.startsAt, event?.timeZone);
   const heading = leader?.title || 'The next screening';
-  const detail = open
-    ? (leader?.votes > 0 ? 'Leading the vote' : 'On the ballot')
-    : live ? `${event.viewers} watching` : leader ? 'Selected by the community' : '';
+  const detail = open ? (leader?.votes > 0 ? 'Leading the vote' : '')
+    : live ? `${Number(event.viewers) || 0} watching` : event?.winner ? 'Community pick' : '';
   const mainAction = live ? 'Watch live' : open ? 'View ballot' : 'View screening';
   const mainDestination = destination + (open ? '#nightBallotTitle' : '');
   const picks = candidates.map(film => {
     const poster = artwork(film.poster);
     return `<li><a href="${destination}#night-film-${film.id}" aria-label="View ${esc(film.title)} on the ballot">
-      ${poster ? `<img src="${esc(poster)}" width="200" height="300" alt="" loading="lazy" decoding="async">` : ''}
-      <span>${esc(film.title)}</span></a></li>`;
+      <span class="svHomeNightPickFrame${poster ? '' : ' isEventPoster'}"><img src="${esc(poster || eventCover)}" width="200" height="300" alt="" loading="lazy" decoding="async"${poster ? ` data-night-event-cover="${eventCover}"` : ''}></span>
+      <span class="svHomeNightPickName"><span>${esc(film.title)}</span>${icon('arrow')}</span></a></li>`;
   }).join('');
   return `<section class="svMovieNightFeature" data-home-movie-night data-home-night-phase="${esc(event?.phase || 'unavailable')}" aria-labelledby="svHomeMovieNightsTitle">
-    <div class="svHomeNightHead"><h2 id="svHomeMovieNightsTitle">Movie Nights</h2><a class="svHomeNightMore" href="/movie-nights">All screenings ${icon('arrow')}</a></div>
-    <div class="svHomeNightLayout${picks ? ' hasBallot' : ''}">
-      <a class="svHomeNightSpotlight${image ? ' hasBackdrop' : ''}" href="${mainDestination}">
-        ${image ? `<img class="svHomeNightArt" src="${esc(image)}" width="1280" height="720" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}
-        <div class="svHomeNightCopy">
-          <span class="svHomeNightState"><i aria-hidden="true"></i>${esc(state)}</span>
-          <strong>${esc(heading)}</strong>
-          ${date || detail ? `<span class="svHomeNightFacts">${date}${date && detail ? '<span aria-hidden="true">·</span>' : ''}${detail ? `<span>${esc(detail)}</span>` : ''}</span>` : ''}
-          <span class="svHomeNightAction">${icon(live ? 'play' : 'arrow')}${mainAction}</span>
-        </div>
-        <figure class="svHomeNightPoster${filmPoster ? '' : ' isEventPoster'}" aria-hidden="true">
-          <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low"${filmPoster ? ` data-night-event-cover="${eventCover}"` : ''}>
-          <span class="svHomeNightPosterTitle">Movie<br>Nights</span>
-        </figure>
-      </a>
-      ${picks ? `<div class="svHomeNightBallot"><h3>Also on the ballot</h3><ul>${picks}</ul></div>` : ''}
+    <div class="svHomeNightProgram${picks ? ' hasBallot' : ''}">
+      ${image ? `<img class="svHomeNightArt" data-night-backdrop src="${esc(image)}" width="1280" height="720" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}
+      <header class="svHomeNightHead"><h2 id="svHomeMovieNightsTitle">Movie Nights</h2><a class="svHomeNightMore" href="/movie-nights">All screenings ${icon('arrow')}</a></header>
+      <div class="svHomeNightLayout">
+        <a class="svHomeNightSpotlight" href="${mainDestination}">
+          <div class="svHomeNightCopy">
+            <span class="svHomeNightState"><i aria-hidden="true"></i>${esc(state)}</span>
+            <strong>${esc(heading)}</strong>
+            ${date || detail ? `<span class="svHomeNightFacts">${date ? `<span>${icon('clock')}${date}</span>` : ''}${detail ? `<span>${esc(detail)}</span>` : ''}</span>` : ''}
+            <span class="svHomeNightAction">${mainAction}${icon(live ? 'play' : 'arrow')}</span>
+          </div>
+          <figure class="svHomeNightPoster${filmPoster ? '' : ' isEventPoster'}" aria-hidden="true">
+            <img src="${esc(filmPoster || eventCover)}" width="400" height="600" alt="" loading="lazy" decoding="async" fetchpriority="low"${filmPoster ? ` data-night-event-cover="${eventCover}"` : ''}>
+            <span class="svHomeNightPosterTitle">Movie<br>Nights</span>
+          </figure>
+        </a>
+        ${picks ? `<section class="svHomeNightBallot" aria-labelledby="svHomeNightBallotTitle"><h3 id="svHomeNightBallotTitle">Also on the ballot</h3><ul>${picks}</ul></section>` : ''}
+      </div>
     </div>
   </section>`;
 }
