@@ -41,8 +41,11 @@ body.svCleanShell .svNightPage {
 }
 .nightBroadcast { grid-area: broadcast; min-width: 0; }
 .nightStage {
-  position: relative; isolation: isolate; aspect-ratio: 16 / 9; overflow: clip;
+  position: relative; isolation: isolate; width: 100%; aspect-ratio: 16 / 9; overflow: clip;
   border: 1px solid var(--night-border); border-radius: 16px; background: #101318;
+}
+[data-night-phase-state="unavailable"] .nightStage:not(:has(.nightFeatureArt)) {
+  aspect-ratio: auto; min-height: clamp(250px, 35vw, 370px);
 }
 .nightLobby { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 82% 0, #202e3d, transparent 65%); }
 .nightFeatureArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 38%; }
@@ -111,6 +114,9 @@ body.svCleanShell .svNightPage {
   border: 1px solid var(--night-border); border-radius: 14px; background: #111419;
 }
 .nightChat[data-collapsed=true] { height: auto; }
+@media (min-width: 951px) {
+  [data-night-phase-state="unavailable"]:not(:has(.nightFeatureArt)) .nightChat:not([data-collapsed=true]) { height: 370px; }
+}
 .nightChatHeader { display: flex; align-items: center; justify-content: space-between; min-height: 54px; padding: 3px 15px; border-bottom: 1px solid #ffffff10; }
 .nightChatHeader > div { display: flex; align-items: center; gap: 9px; }
 .nightChatHeader h2 { margin: 0; font-size: 15px; font-weight: 550; }
@@ -211,6 +217,9 @@ body.svCleanShell .svNightPage {
   .nightBallotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nightUpcomingGrid { grid-template-columns: minmax(0, 1fr); }
   .nightComposer input { font-size: 16px; }
+}
+@media (max-width: 360px) {
+  .nightStage { min-height: 270px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .svNightPage *, .svMovieNightFeature * { transition: none !important; animation: none !important; }

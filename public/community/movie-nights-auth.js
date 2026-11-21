@@ -49,7 +49,6 @@
     if (busy) return;
     ++availabilityEpoch;
     overlay.hidden = true;
-    root.dataset.nightAuthVisible = 'false';
     form.reset();
     showError('');
     opener?.focus?.();
@@ -81,7 +80,6 @@
     opener = trigger || document.activeElement;
     updateMode(next);
     overlay.hidden = false;
-    root.dataset.nightAuthVisible = 'true';
     document.addEventListener('keydown', onKeyDown, true);
     (mode === 'signup' ? form.elements.name : form.elements.email).focus();
     // Surface missing durable storage clearly; never substitute a device-only account.

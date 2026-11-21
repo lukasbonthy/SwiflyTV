@@ -37,7 +37,7 @@
   const count=$('[data-night-countdown]');if(event.phase==='voting'||event.phase==='countdown'){
    const seconds=Math.max(0,Math.ceil((event.startsAt-now())/1000)),days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60),remaining=seconds%60;
    count.textContent=seconds?'Starts in '+(days?days+'d ':hours?hours+'h ':'')+(days?hours+'h':minutes+'m '+String(remaining).padStart(2,'0')+'s'):event.sourceStatus==='loading'?'Preparing the shared source…':'Waiting for the screening to start…';
-  }else count.textContent=event.phase==='live'?'The screening is live':event.phase==='ended'?'Thanks for watching':'The screening needs a moment';
+  }else count.textContent=event.phase==='live'?'The screening is live':event.phase==='ended'?'Thanks for watching':'';
   if(joined&&following&&canPlay()&&sourceKey&&atLive()&&player?.getState().ready&&!loadingSource){
    const current=player.getState(),drift=expected()-current.currentTime,video=playerRoot?.querySelector('[data-player-video]');
    if(Math.abs(drift)>2.25){player.seek(expected(),{remote:true});if(video)video.playbackRate=1;}
@@ -167,7 +167,8 @@
   if(data.message&&data.code)status(data.message);
   if(!data.event){$('[data-night-refresh]').hidden=false;return;}
   if(id&&data.event.id!==id)return;
-  const chatWasClosed=event?.phase==='ended'||state.code==='storage_unavailable';
+  const storageWasUnavailable=state.code==='storage_unavailable';
+  const chatWasClosed=event?.phase==='ended'||storageWasUnavailable;
   const savedVote=event?.yourVote;event={...data.event,...(!personal?{yourVote:savedVote??null}:{})};id=event.id;root.dataset.nightId=id;state={...state,...data,event,code:data.code};
   if(personal&&data.viewer)viewer=data.viewer;
   const leader=event.winner||[...(event.candidates||[])].sort((a,b)=>b.votes-a.votes)[0];
@@ -188,6 +189,7 @@
   if(startTime)startTime.dateTime=new Date(event.startsAt).toISOString();
   $('[data-night-event-title]').textContent=atLive()&&event.winner?event.winner.title:event.title;
   $('[data-night-viewers]').textContent=event.viewers+' here';
+  $('[data-night-presence]').hidden=storageUnavailable;
   $('[data-night-on-air]').hidden=!atLive();
   $('[data-night-view-ballot]').hidden=!open;
   const join=$('[data-night-join]');
@@ -203,7 +205,7 @@
   $('[data-night-retry]').hidden=event.sourceStatus!=='error'||!viewer.signedIn;
   $('[data-night-refresh]').hidden=!data.code&&!unavailable;
   if(event.sourceStatus==='error')status('The shared source could not load. The selected film is saved; retry when you’re ready.');
-  else if(online&&!data.code)status('');
+  else if((online||storageWasUnavailable)&&!data.code)status('');
   if(!atLive()){++mountEpoch;playerController?.abort();loadingSource=false;sourceKey='';player?.setRemoteMode({enabled:true,isHost:false,manual:true});player?.pause({remote:true});$('[data-night-player]').hidden=true;$('[data-night-lobby]').hidden=false;}else if(canPlay())player?.setRemoteMode({manual:true});$('[data-night-event-copy]').textContent=({voting:'The most voted film plays at showtime.',countdown:'The community’s pick starts soon.',live:'Watch together and pause whenever you need.',ended:'See the schedule for the next screening.',unavailable:'Check back for the next screening.'}[event.phase]||'');ballot();upcoming(data.upcoming);dates();for(const message of event.messages||[])appendMessage(message);followingUI();updateClock();void mountPlayer();
  }
  function staleRequest(){return Object.assign(new Error('The account or screening changed.'),{name:'AbortError'});}
@@ -217,10 +219,37 @@
    options={...options,headers:{...options.headers,'X-Swifly-Account':expectedOwner}};
   }
   const controller=new AbortController();requests.add(controller);let timedOut=false;const timer=setTimeout(()=>{timedOut=true;controller.abort();},12000);
-  try{const response=await fetch(url,{...options,signal:controller.signal,credentials:'same-origin'}),data=await response.json();if(generation!==epoch||!ownerMatches(expectedOwner))throw staleRequest();if(!response.ok){const error=new Error(data.message||'This change could not be saved. Try again.');error.code=data.code;throw error;}return{...data,_requestSequence:sequence,_ownerEpoch:generation};}catch(error){if(timedOut&&generation===epoch&&ownerMatches(expectedOwner))throw new Error('The screening did not respond. Please try again.');throw error;}finally{clearTimeout(timer);requests.delete(controller);}
+  try{
+   const response=await fetch(url,{...options,signal:controller.signal,credentials:'same-origin'}),data=await response.json();
+   if(generation!==epoch||!ownerMatches(expectedOwner))throw staleRequest();
+   // An unavailable screening still returns its schedule and retry state.
+   const unavailableSnapshot=(!options.method||options.method==='GET')&&response.status===503&&data.event;
+   if(!response.ok&&!unavailableSnapshot){const error=new Error(data.message||'This change could not be saved. Try again.');error.code=data.code;throw error;}
+   return{...data,_requestSequence:sequence,_ownerEpoch:generation};
+  }catch(error){
+   if(timedOut&&generation===epoch&&ownerMatches(expectedOwner))throw new Error('The screening did not respond. Please try again.');
+   throw error;
+  }finally{clearTimeout(timer);requests.delete(controller);}
  }
 
- async function refresh(){const generation=epoch;try{const sentAt=Date.now(),data=await request('/api/movie-nights'+(id?'/'+encodeURIComponent(id):''));if(generation===epoch){apply(data,{personal:true,sentAt});if(!socket&&id)connect();}}catch(error){if(generation!==epoch||error.name==='AbortError')return;status(error.message);$('[data-night-refresh]').hidden=false;}}
+ async function refresh({revalidate=true}={}){
+  const generation=epoch,recovering=state.code==='storage_unavailable';
+  try{
+   if(recovering&&revalidate)await window.SwiflyAccount?.revalidate?.();
+   // Account hydration may already have reopened the room for the verified owner.
+   if(generation!==epoch)return;
+   const sentAt=Date.now(),data=await request('/api/movie-nights'+(id?'/'+encodeURIComponent(id):''));
+   if(generation!==epoch)return;
+   apply(data,{personal:true,sentAt});
+   if(!socket&&id)connect();
+   else if(socket?.connected&&!admitted&&!data.code)void enter();
+  }catch(error){
+   if(generation!==epoch||error.name==='AbortError')return;
+   if(error.code==='storage_unavailable')state.code=error.code;
+   status(recovering?'Voting and chat are temporarily unavailable. Try again shortly.':error.message);
+   $('[data-night-refresh]').hidden=false;
+  }
+ }
  async function retry(){if(event?.sourceStatus==='ready'&&event.source){if(!canPlay()){status('Reconnecting to the screening. Try playback once the connection returns.');return;}sourceKey='';status('Reconnecting your player to the live screening…');await mountPlayer();if(canPlay()&&player?.getState().ready)status('');return;}if(!viewer.signedIn){status('Sign in to retry the shared source.');return;}status('Retrying the shared source…');try{apply(await request('/api/movie-nights/'+encodeURIComponent(id)+'/retry',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}),{personal:true});}catch(error){if(error.name!=='AbortError')status(error.message);}}
  function enter(){
   if(disposed||suspended||!socket?.connected||!id)return Promise.resolve(false);
@@ -229,7 +258,16 @@
   pending.promise=new Promise(resolve=>{pending.resolve=resolve;});
   pending.finish=ok=>{clearTimeout(pending.timer);if(pendingJoin===pending)pendingJoin=null;pending.resolve(ok);};pendingJoin=pending;
   pending.timer=setTimeout(()=>{if(pendingJoin===pending){status('The screening did not connect. Try again.');pending.finish(false);}},10000);
-  socket.emit('night:join',{id},reply=>{if(disposed||suspended||generation!==admissionEpoch||scope!==epoch||!ownerMatches(identity)||!socket?.connected){pending.finish(false);return;}if(reply?.ok){admitted=true;online=true;player?.setRemoteMode({manual:true});lastSync=Date.now();apply(reply,{personal:true,sentAt,sequence});pending.finish(true);}else{status(reply?.message||'The screening could not connect. Try again.');pending.finish(false);}});
+  socket.emit('night:join',{id},reply=>{
+   if(disposed||suspended||generation!==admissionEpoch||scope!==epoch||!ownerMatches(identity)||!socket?.connected){pending.finish(false);return;}
+   if(reply?.ok){admitted=true;online=true;player?.setRemoteMode({manual:true});lastSync=Date.now();apply(reply,{personal:true,sentAt,sequence});pending.finish(true);return;}
+   if(reply?.code==='storage_unavailable'){
+    state.code=reply.code;
+    $('[data-night-refresh]').hidden=false;
+   }
+   status(reply?.message||'The screening could not connect. Try again.');
+   pending.finish(false);
+  });
   return pending.promise;
  }
 
@@ -264,7 +302,13 @@
  function destroy(){if(disposed)return;disposed=true;stop();player?.destroy();player=null;for(const remove of listeners)remove();}
  listen(window,'pagehide',action=>{if(action.persisted){suspended=true;stop();}else destroy();});listen(window,'pageshow',action=>{if(action.persisted&&!disposed){suspended=false;connect();void refresh();clock=setInterval(updateClock,1000);}});
  function clearPrivateDraft(){lastDraft=null;clearTimeout(sendTimer);$('[data-night-message]').value='';$('[data-night-message-form] button').disabled=false;status('','[data-night-compose-status]');status('','[data-night-vote-status]');}
- function accountChanged(nextOwner,{reconnect=true}={}){stop();owner=nextOwner;appliedPersonalSequence=0;clearPrivateDraft();viewer={signedIn:false};if(event)event={...event,yourVote:null};apply({event,viewer,serverTime:now()},{personal:true});if(reconnect){connect();void refresh();clock=setInterval(updateClock,1000);}}
+ function accountChanged(nextOwner,{reconnect=true}={}){
+  stop();owner=nextOwner;appliedPersonalSequence=0;clearPrivateDraft();viewer={signedIn:false};
+  if(event)event={...event,yourVote:null};
+  // Clearing another account's draft is local state, not a new server timestamp.
+  apply({event,viewer,code:state.code,message:state.message},{personal:true});
+  if(reconnect){connect();void refresh({revalidate:false});clock=setInterval(updateClock,1000);}
+ }
  listen(document,'swifly:account-suspended',()=>accountChanged('',{reconnect:false}));
  listen(document,'swifly:account-hydrated',()=>{const next=window.SwiflyAccount?.user?.id||'';if(next!==owner||!socket||!admitted)accountChanged(next);});
  listen(window,'storage',action=>{if(action.key==='swiflytv.accountOwner')accountChanged(String(action.newValue||'guest')==='guest'?'':String(action.newValue||''));});

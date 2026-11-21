@@ -1,3 +1,5 @@
+body.svCleanShell:has(.nightAuthOverlay:not([hidden])) { overflow: hidden; }
+body.svCleanShell:has(.nightAuthOverlay:not([hidden])) :is(.topbar, .mobileNav) { visibility: hidden; }
 .svNightPage .nightAuthOverlay {
   position: fixed; z-index: 10050; inset: 0; display: grid; place-items: center;
   padding: 16px; background: #06070bdc;

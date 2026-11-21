@@ -32,7 +32,7 @@ async function open(t,width=1440,height=1050,route='/movie-night/'+voteId){const
 async function shot(page,name){const dir=process.env.SWIFLY_EXPERIENCE_SCREENSHOT_DIR;if(dir){fs.mkdirSync(dir,{recursive:true});await page.screenshot({path:path.join(dir,'movie-nights-'+name+'.png'),fullPage:true});}}
 async function fits(page){const issues=await page.evaluate(()=>{const outside=[];for(const n of document.querySelectorAll('.svNightPage :is(button,input,a)')){if(n.closest('[hidden],template')||n.closest('.svPlayerStatus[hidden],.svPlayerPopover:not([open])'))continue;const r=n.getBoundingClientRect(),s=getComputedStyle(n);if(!r.width||!r.height||s.visibility==='hidden')continue;if(r.left<-.5||r.right>innerWidth+.5)outside.push({text:n.textContent,box:r.toJSON()});}return{overflow:document.documentElement.scrollWidth>innerWidth,outside};});assert.equal(issues.overflow,false,JSON.stringify(issues));assert.deepEqual(issues.outside,[]);}
 for(const [name,width,height]of [['desktop',1440,1050],['ipad',834,1112],['phone',390,844],['small-phone',320,800]])test('real Movie Nights ballot and chat fit '+name,{skip:!available,timeout:90000},async t=>{
- const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);await shot(f.page,name+'-voting');
+ const f=await open(t,width,height);await f.page.locator('[data-night-vote]').first().waitFor();assert.equal(await f.page.locator('[data-night-vote]').count(),6);assert.equal(await f.page.locator('[data-night-total-votes]').textContent(),'0');await shot(f.page,name+'-voting');await f.page.locator('[data-night-vote]').first().click();await f.page.locator('[data-night-vote-status]').filter({hasText:'Sign in'}).waitFor();await fits(f.page);
  if(!await f.page.locator('[data-night-chat-body]').isVisible()){await f.page.locator('[data-night-chat-toggle]').click();assert(await f.page.locator('[data-night-chat-body]').isVisible());}await f.page.locator('[data-night-chat-toggle]').click();assert.equal(await f.page.locator('[data-night-chat-body]').isVisible(),false);await fits(f.page);await shot(f.page,name+'-chat-collapsed');assert.deepEqual(f.errors,[]);
 });
 async function waitForNightPlayback(page, label){
@@ -120,8 +120,14 @@ test('Home fits the screening artwork and deep links to real ballot picks on des
    await feature.screenshot({path:path.join(dir,'movie-nights-'+label+'-home-feature.png')});
   }
   await feature.getByRole('link',{name:'View '+firstPick.title+' on the ballot',exact:true}).click();
-  assert.equal(new URL(f.page.url()).hash,'#night-film-'+firstPick.id);
-  assert.equal(await f.page.locator('#night-film-'+firstPick.id).count(),1);
+  const target='night-film-'+firstPick.id;
+  await f.page.waitForURL(url=>url.pathname==='/movie-night/'+voteId&&url.hash==='#'+target);
+  await f.page.waitForFunction(id=>{
+   const card=document.getElementById(id);
+   if(!card?.matches(':target'))return false;
+   const {top,bottom}=card.getBoundingClientRect();
+   return top<innerHeight-48&&bottom>104;
+  },target);
   assert.deepEqual(f.errors,[]);
  }
 });
@@ -134,6 +140,7 @@ test('the screening stage and account dialog fit desktop and a narrow phone',{sk
   assert(stage&&heading&&stage.width>250&&stage.x>=0&&stage.x+stage.width<=width+.5&&stage.y>heading.y&&stage.y<height/2,JSON.stringify({label,stage,heading}));
   await f.page.locator('[data-night-auth-open="signup"]').click();
   await f.page.locator('[data-night-auth-overlay]').waitFor({state:'visible'});
+  assert.equal(await f.page.locator('.topbar').isVisible(),false);
   const dialog=await f.page.locator('[data-night-auth-overlay] [role="dialog"]').boundingBox();
   assert(dialog&&dialog.x>=0&&dialog.x+dialog.width<=width+.5,JSON.stringify({label,dialog}));
   await f.page.locator('[data-night-auth-mode="login"]').click();

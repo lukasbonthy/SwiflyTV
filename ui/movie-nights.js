@@ -105,7 +105,7 @@ function ballotCard(film, event) {
 }
 
 function accountDialog() {
-  return `<div class="nightAuthOverlay" data-night-auth-overlay hidden>
+  return `<div class="nightAuthOverlay" data-night-auth-overlay data-lenis-prevent hidden>
     <section class="nightAuthPanel" role="dialog" aria-modal="true" aria-labelledby="nightAuthTitle" aria-describedby="nightAuthIntro">
       <button type="button" class="nightAuthClose" data-night-auth-close aria-label="Close account setup">×</button>
       <h2 id="nightAuthTitle" data-night-auth-title>Create a SwiflyTV account</h2>
@@ -169,7 +169,7 @@ function movieNightsMarkup({snapshot = {}, playerHtml = ''} = {}) {
             <div class="nightStageShade"></div>
             <div class="nightStageTop">
               <span class="nightPhase" data-night-phase>${esc(phaseLabel(event))}</span>
-              <span class="nightPresence">${icon('people')}<span data-night-viewers>${Number(event?.viewers) || 0} here</span></span>
+              <span class="nightPresence" data-night-presence${snapshot.code === 'storage_unavailable' ? ' hidden' : ''}>${icon('people')}<span data-night-viewers>${Number(event?.viewers) || 0} here</span></span>
             </div>
             <div class="nightLobbyCopy">
               <span class="nightEyebrow" data-night-feature-label>${event?.winner ? 'COMMUNITY PICK' : leader ? 'ON THE BALLOT' : 'SCHEDULED SCREENING'}</span>
