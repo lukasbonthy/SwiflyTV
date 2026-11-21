@@ -2,7 +2,13 @@
 
 Updated: November 21, 2026 (UTC).
 
-## Current release — Home Movie Nights showcase
+## Current release — Home Movie Nights lineup
+
+- **Production:** [PR #176](https://github.com/lukasbonthy/SwiflyTV/pull/176) shipped application commit `d8657adf39a962e80840439bbcefade88910bf4e` and tested tree `f37f78fa1731dd17221e93c8771e11ede3ed6ed8` as Render deployment `dep-dc11df3tqb8s73a2mogg`. It went live November 21 at 5:12 PM Eastern (`2026-11-21T22:12:07.241074Z`). The startup log confirmed temporary account mode. Production HTTP confirmed the Home and catalog asset access gate.
+- **Home feature:** A compact screening introduction sits beside a single lineup of four full portrait ballot posters. Each poster opens its own vote entry, and mobile displays a swipeable rail with a glimpse of the next film. Keyboard focus reveals each complete poster. The schedule view uses one image when voting art is absent and keeps a bundled fallback for failed images.
+- **Verification:** 74 focused local checks and all 13 [hosted Chromium cases](https://github.com/lukasbonthy/SwiflyTV/actions/runs/44955042591) passed. Reviewed wide desktop and 320 px screenshots. The browser checked equal poster shapes, the fallback cover and schedule link, complete focus visibility, and ballot links in both Home renderers. The rendered production page requires site access. A documentation checkpoint is separate from the running build.
+
+## Prior release — Home Movie Nights showcase
 
 - **Production:** [PR #175](https://github.com/lukasbonthy/SwiflyTV/pull/175) shipped application commit `4ecfc2fca32d925697a79ae4e97a1c7ee1f7627e` and tested tree `cb524fd058d292355fd3addce2bf707aa8a096cd` as Render deployment `dep-dc10umu417fc73b31img`. It went live November 21 at 4:39 p.m. Eastern (`2026-11-21T21:39:27.0297Z`). This deployment restarted temporary accounts. Production HTTP confirmed the existing Home, Movie Nights and catalog stylesheet access gate.
 - **Home feature:** The featured film and ballot now share one frame. The film has a larger title and backdrop, and candidate posters keep their full 2:3 proportions. Each pick keeps its ballot deep link. The lineup stacks below the spotlight on phones. Failed candidate and featured posters use the bundled cover. A failed backdrop leaves the dark event background.
