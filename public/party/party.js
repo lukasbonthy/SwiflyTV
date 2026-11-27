@@ -7,7 +7,7 @@
  const roomCall=socket&&window.SwiflyWatchroomCall?.mount($('[data-watchroom-call]'),{socket});
  const initialPickQuery=new URLSearchParams(location.search),initialPickType=initialPickQuery.get('type')==='tv'?'tv':'movie';
  const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
- let username='Guest',currentRoom='channel-general',currentTitle='General',permissions={},pendingInvite='',joinEpoch=0,listEpoch=0,movieEpoch=0,callEpoch=0,disposed=false,localStream=null,callTrigger=null;
+ let username='Guest',currentRoom='channel-general',currentTitle='General',permissions={},pendingInvite=null,watchJoinTimer=null,partyConnectionError=false,joinEpoch=0,listEpoch=0,movieEpoch=0,callEpoch=0,disposed=false,localStream=null,callTrigger=null;
  let activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};
  let partyPlayer=null,partyPlayerRoot=null,partySourceData=null,mediaEpoch=0;
  const partyMediaListeners=[];
@@ -16,6 +16,8 @@
  const featuredMovies=new Map(),featuredShows=new Map(),lobbyMovies=new Map();
  let selectedMovie=null,roomFilm=null,wantedMovieId='',wantedMovieType='movie',wantedSeason='1',wantedEpisode='1',selectionPending=false,selectionError='',selectionEpoch=0,featuredEpoch=0,featuredShowsEpoch=0,lobbySearchEpoch=0,pendingRoomMovie=null,roomChoice=null,roomChoiceEpoch=0,roomPickerEpoch=0,roomPickerKey='';
  const connected=()=>Boolean(socket?.connected)&&!disposed;
+ const roomNotFound='That party could not be found. Ask the host for a fresh invite.';
+ const joinUnavailable='The party connection is unavailable. Try joining again.';
  const glyph='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m9 5 11 7-11 7V5Z"/></svg>';
  const choiceKey=movie=>(movie?.type==='tv'?'tv':'movie')+':'+String(movie?.id||movie?.movieId||'');
  function selection(movie){const movieId=String(movie?.movieId||movie?.id||''),type=movie?.type||'movie';if(!/^[1-9]\d*$/.test(movieId)||!Number.isSafeInteger(Number(movieId))||!['movie','tv'].includes(type))return null;if(type==='movie')return {movieId,type};const season=String(movie.season||''),episode=String(movie.episode||'');return /^[1-9]\d*$/.test(season)&&/^[1-9]\d*$/.test(episode)&&Number.isSafeInteger(Number(season))&&Number.isSafeInteger(Number(episode))?{movieId,type,season,episode}:null;}
@@ -32,11 +34,11 @@
   $('#sv100Name').textContent=username;$('#sv100Avatar').textContent=username.slice(0,1).toUpperCase();$('#sv100CreatorInput').value=username;
  }
  function updateConnection(){
-  app.dataset.partyConnection=connected()?'online':'offline';$('#sv100Status').textContent=connected()?'Connected':'Connecting / offline';
+  app.dataset.partyConnection=connected()?'online':'offline';$('#sv100Status').textContent=connected()?'Connected':partyConnectionError?'Connection unavailable':'Connecting / offline';
   $$('[data-requires="rooms"]').forEach(n=>n.disabled=!connected()||!permissions.canCreateWatchRooms);
   $('#sv100CreateRoomForm button[type="submit"]').disabled=!connected()||!permissions.canCreateWatchRooms||selectionPending||Boolean(selectionError)||$('#sv100CreateRoomForm').getAttribute('aria-busy')==='true';
-  $('#partyJoinForm button[type="submit"]').disabled=!connected()||$('#partyJoinForm').getAttribute('aria-busy')==='true';
-  const chatUnavailable=!connected()||(app.dataset.partyView==='chat'&&(verifiedCommunityRoom!==currentRoom||!communityScope()));$('#sv100Input').disabled=chatUnavailable;$('#sv100Composer button').disabled=chatUnavailable;
+  $('#partyJoinForm button[type="submit"]').disabled=$('#partyJoinForm').getAttribute('aria-busy')==='true';
+  const chatUnavailable=!connected()||(app.dataset.partyView==='chat'?(verifiedCommunityRoom!==currentRoom||!communityScope()):!activeWatchRoom.admitted);$('#sv100Input').disabled=chatUnavailable;$('#sv100Composer button').disabled=chatUnavailable;
   updateHostUi();
  }
  async function loadPermissions(){
@@ -210,8 +212,19 @@
  }
  function startQueuedMovie(){if(!pendingRoomMovie||pendingRoomMovie.roomId!==activeWatchRoom.id)return;const queued=pendingRoomMovie;pendingRoomMovie=null;if(!connected()||!activeWatchRoom.isHost)return;socket.emit('watchroom:movie-select',{roomId:queued.roomId,...selection(queued.movie),name:username});toast('Getting '+queued.movie.title+' ready for your party…');}
  function parseInvite(value){
-  const text=String(value||'').trim();if(/^[a-z0-9-]{3,32}$/i.test(text))return text.toLowerCase();
-  try{const url=new URL(text,origin);if(url.origin!==origin)throw new Error();const path=url.pathname.match(/^\/watchrooms\/([a-z0-9-]{3,32})\/?$/i);const player=/^\/watch\/(?:movie|tv)\/[1-9]\d*\/?$/.test(url.pathname);const code=url.pathname==='/social'||player?url.searchParams.get('roomId'):path?.[1];if(code&&/^[a-z0-9-]{3,32}$/i.test(code))return code.toLowerCase();}catch{}
+  const text=String(value||'').trim(),valid=/^[a-z0-9][a-z0-9-]{0,31}$/i;
+  if(valid.test(text))return text.toLowerCase();
+  try{
+   const url=new URL(text,origin);
+   if(url.origin===origin&&['http:','https:'].includes(url.protocol)){
+    const path=url.pathname.replace(/\/$/,'');
+    let codes=[];
+    if(path==='/watchrooms/join')codes=[...url.searchParams.getAll('code'),...url.searchParams.getAll('room')];
+    else if(/^\/(?:social|watch\/(?:movie|tv)\/[1-9]\d*)$/.test(path))codes=url.searchParams.getAll('roomId');
+    else {const match=path.match(/^\/watchrooms\/([^/]+)$/i);if(match)codes=[match[1]];}
+    if(codes.length===1&&valid.test(codes[0]))return codes[0].toLowerCase();
+   }
+  }catch{}
   throw new Error('Paste a valid room code or an invite from this site.');
  }
  function readVideoLink(value){const text=String(value||'').trim();if(!text)return '';try{const url=new URL(text);if(['http:','https:'].includes(url.protocol))return url.href;}catch{}throw new Error('Use a complete http or https video link.');}
@@ -239,15 +252,27 @@
   $$('.hostOnly').forEach(el=>{el.disabled=!host;if(el.matches('details,form'))el.hidden=!host;el.querySelectorAll('input,button,select').forEach(n=>n.disabled=!host);});
   $$('[data-party-room-episodes] a').forEach(link=>link.setAttribute('aria-disabled',String(!host)));
   const episodeNote=$('.partyEpisodeHostNote');if(episodeNote)episodeNote.textContent=host?'Choose an episode for everyone.':'The host chooses the episode for everyone.';
-  $('#sv103HostStatus').textContent=!activeWatchRoom.joined?'Joining…':!connected()?'Reconnecting…':host?'You’re hosting':'Watching with the host';
-  $$('[data-action="invite"],[data-action="copy-room-link"],[data-action="copy-room-code"]').forEach(n=>n.disabled=!activeWatchRoom.joined);
+  $('#sv103HostStatus').textContent=partyConnectionError?'Connection unavailable':!connected()?'Reconnecting…':!activeWatchRoom.admitted?'Joining…':host?'You’re hosting':'Watching with the host';
+  $$('[data-action="invite"],[data-action="copy-room-link"],[data-action="copy-room-code"]').forEach(n=>n.disabled=!activeWatchRoom.admitted);
  }
- function subscribeWatchRoom(){socket.emit('watchroom:join',{roomId:activeWatchRoom.id,name:activeWatchRoom.name,videoId:activeWatchRoom.videoId||'',embedUrl:activeWatchRoom.embedUrl||'',mediaKind:activeWatchRoom.kind,user:username});}
+ function rejectWatchJoin(roomId,message){
+  if(roomId!==activeWatchRoom.id)return;
+  leaveNativeWatchRoom();
+  $('[data-party-entry="join"]')?.click();
+  $('#partyInvite').value=roomId;
+  $('[data-party-join-status]').textContent=message;
+ }
+ function subscribeWatchRoom(){
+  const roomId=activeWatchRoom.id;
+  clearTimeout(watchJoinTimer);
+  watchJoinTimer=setTimeout(()=>rejectWatchJoin(roomId,'The room did not connect. Try joining again.'),12000);
+  socket.emit('watchroom:join',{roomId,user:username,existingOnly:true});
+ }
  function openNativeWatchRoom(room,movieToStart=null){
   if(!room?.id||!connected()){toast('Connect to the party service before joining.',true);return;}
   if(activeWatchRoom.joined&&activeWatchRoom.id!==room.id)leaveNativeWatchRoom(false);
   roomCall?.setRoom('');
-  activeWatchRoom={...room,id:String(room.id),name:room.name||'Movie night',kind:room.kind||room.mediaKind||'blank',joined:true,isHost:false,sync:null};
+  activeWatchRoom={...room,id:String(room.id),name:room.name||'Movie night',kind:room.kind||room.mediaKind||'blank',joined:true,admitted:false,isHost:false,sync:null};
   if(movieToStart)pendingRoomMovie={roomId:activeWatchRoom.id,movie:movieToStart};
   app.dataset.partyRoom='active';$('#sv103NativeRoom').hidden=false;$('#sv103RoomLobby').hidden=true;$('#sv103RoomTitle').textContent=activeWatchRoom.name;$('#sv103RoomSub').textContent='Your room is ready. Share the invite and get comfortable.';$('#sv103RoomCode').textContent=activeWatchRoom.id;
   showMedia({videoId:room.videoId,embedUrl:room.embedUrl,mediaKind:activeWatchRoom.kind});$('#sv103ViewerCount').textContent='…';$('#sv100MembersList').innerHTML='<p>Connecting your people…</p>';$('#sv100MemberCount').textContent='Connecting…';
@@ -256,6 +281,7 @@
  }
  function leaveNativeWatchRoom(refresh=true){
   roomCall?.setRoom('');
+  clearTimeout(watchJoinTimer);pendingInvite=null;
   joinEpoch++;movieEpoch++;roomChoiceEpoch++;roomChoice=null;$('#partyRoomEpisodeForm').hidden=true;pendingRoomMovie=null;movies.clear();const id=activeWatchRoom.id;if(id)socket?.emit('watchroom:leave',{roomId:id});destroyMedia();closeCall();activeWatchRoom={id:'',name:'Movie night',joined:false,isHost:false,sync:null};renderRoomEpisodes(null);
   renderRoomFilm(null);app.dataset.partyRoom='lobby';$('#sv103NativeRoom').hidden=true;$('#sv103RoomLobby').hidden=false;$('#sv103Player').innerHTML='<div class="sv103EmptyPlayer"><b>Your movie night starts here.</b><span>The host can choose a movie, TV show or video link.</span></div>';$('#sv103RoomTitle').textContent='Party Hub';$('#sv103RoomSub').textContent='Make yourself comfortable.';$('#partyMovieResults').replaceChildren();currentRoom=communityRoom;currentTitle=communityTitle;updateHostUi();switchTab('rooms');try{history.replaceState(history.state,'','/social?tab=watchrooms');}catch{}if(refresh)renderRooms();
  }
@@ -267,10 +293,26 @@
   catch(error){if(operation===joinEpoch)status.textContent=error.message;}finally{form.removeAttribute('aria-busy');updateConnection();}
  }
  async function joinInvite(value){
-  const status=$('[data-party-join-status]');if(!connected()){status.textContent='Connect to the party service first.';return;}
-  const operation=++joinEpoch,form=$('#partyJoinForm');form.setAttribute('aria-busy','true');form.querySelector('button[type="submit"]').disabled=true;status.textContent='Finding your room…';
-  try{const code=parseInvite(value),data=await request('/api/date-room/'+encodeURIComponent(code)+'/state');if(operation!==joinEpoch||disposed)return;if(!data.room?.id)throw new Error('That party could not be found. Check the invite.');status.textContent='';openNativeWatchRoom(data.room);}
-  catch(error){if(operation===joinEpoch)status.textContent=error.message==='room_not_found'?'That party could not be found. Ask the host for a fresh invite.':error.message;}finally{form.removeAttribute('aria-busy');updateConnection();}
+  const status=$('[data-party-join-status]'),form=$('#partyJoinForm');
+  if(form.getAttribute('aria-busy')==='true')return;
+  const operation=++joinEpoch;
+  pendingInvite=null;
+  $('[data-party-entry="join"]')?.click();
+  $('#partyInvite').value=value;
+  form.setAttribute('aria-busy','true');form.querySelector('button[type="submit"]').disabled=true;
+  status.textContent='Finding your room…';
+  try{
+   const code=parseInvite(value),data=await request('/api/date-room/'+encodeURIComponent(code)+'/state');
+   if(operation!==joinEpoch||disposed)return;
+   if(data.room?.id!==code)throw new Error('room_not_found');
+   if(connected()){status.textContent='';openNativeWatchRoom(data.room);}
+   else{
+    pendingInvite={room:data.room,operation};
+    status.textContent=!socket||partyConnectionError?joinUnavailable:'Room found. Connecting to your party…';
+    if(socket?.active===false)socket.connect?.();
+   }
+  }catch(error){if(operation===joinEpoch)status.textContent=error.message==='room_not_found'?roomNotFound:error.message;}
+  finally{form.removeAttribute('aria-busy');updateConnection();}
  }
  async function renderRooms(){
   const generation=++listEpoch,target=$('#sv100RoomsList');target.setAttribute('aria-busy','true');
@@ -395,9 +437,15 @@
  });
  const deviceDialog=$('#sv100CallModal');deviceDialog.addEventListener('cancel',event=>{event.preventDefault();closeCall();});deviceDialog.addEventListener('close',()=>{if(!deviceDialog.open&&(localStream||callTrigger))releaseCall();});
  app.addEventListener('keydown',event=>{const modal=$('#sv100CallModal');if(!modal.open)return;if(event.key==='Escape'){event.preventDefault();closeCall();}if(event.key==='Tab'){const a=[...modal.querySelectorAll('button:not(:disabled),video[controls]')],first=a[0],last=a.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
- socket?.on('connect',()=>{updateConnection();if(pendingInvite){const code=pendingInvite;pendingInvite='';joinInvite(code);}else if(activeWatchRoom.joined&&app.dataset.partyView==='rooms')openNativeWatchRoom(activeWatchRoom);else if(app.dataset.partyView==='chat'){if(activeWatchRoom.joined)subscribeWatchRoom();joinCommunityRoom();}});
- socket?.on('disconnect',()=>{roomCall?.setRoom('');communityJoinedRoom='';verifiedCommunityRoom='';communityHistory.clear();updateConnection();renderCommunityMembers([]);if(app.dataset.partyView==='chat')renderMessages();for(const id of [...pendingMessages.keys()])deliveryStatus(id,'Connection lost. Your message was not confirmed; try again.');});
- socket?.on('connect_error',()=>{updateConnection();$('#sv100Status').textContent='Connection unavailable';});
+ socket?.on('connect',()=>{
+  partyConnectionError=false;
+  const invite=pendingInvite;pendingInvite=null;updateConnection();
+  if(invite?.operation===joinEpoch){$('[data-party-join-status]').textContent='';openNativeWatchRoom(invite.room);}
+  else if(activeWatchRoom.joined&&app.dataset.partyView==='rooms')openNativeWatchRoom(activeWatchRoom);
+  else if(app.dataset.partyView==='chat'){if(activeWatchRoom.joined)subscribeWatchRoom();joinCommunityRoom();}
+ });
+ socket?.on('disconnect',()=>{clearTimeout(watchJoinTimer);activeWatchRoom.admitted=false;roomCall?.setRoom('');communityJoinedRoom='';verifiedCommunityRoom='';communityHistory.clear();updateConnection();renderCommunityMembers([]);if(app.dataset.partyView==='chat')renderMessages();for(const id of [...pendingMessages.keys()])deliveryStatus(id,'Connection lost. Your message was not confirmed; try again.');});
+ socket?.on('connect_error',()=>{partyConnectionError=true;updateConnection();if(pendingInvite?.operation===joinEpoch)$('[data-party-join-status]').textContent=joinUnavailable;});
  socket?.on('social:message',message=>{if(app.dataset.partyView==='chat'&&message?.roomId===currentRoom&&verifiedCommunityRoom===currentRoom){confirmCommunityDelivery(message,currentRoom);addMessage(message,true,message.roomId);}});
  socket?.on('social:members',data=>{if(!data||data.roomId!==currentRoom||app.dataset.partyView!=='chat'||currentRoom.startsWith('watchroom-'))return;renderCommunityMembers(data.people||data.members);});
  socket?.on('social:history',data=>{
@@ -407,7 +455,8 @@
  });
  socket?.on('social:typing',data=>{if(data?.roomId!==currentRoom||app.dataset.partyView!=='chat'||(data.id&&identityKey(data)===communityScope()))return;const status=$('[data-community-typing]');status.textContent=String(data.name||'Someone').slice(0,40)+' · '+(data.authenticated===true?'Signed in':'Guest')+' is typing…';clearTimeout(communityTypingTimer);communityTypingTimer=setTimeout(()=>{status.textContent='';},2800);});
  socket?.on('social:error',data=>{if(data?.roomId&&data.roomId!==currentRoom)return;$('[data-community-compose-status]').textContent=data?.code==='rate-limit'?'Please wait a moment, then try again.':data?.code==='creation-disabled'?'Creating lounges is disabled for this profile. Choose an existing lounge.':'The conversation could not update. Please reconnect or choose another lounge.';});
- socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true};roomCall?.setRoom(activeWatchRoom.id);$('#sv103RoomTitle').textContent=activeWatchRoom.name;if(app.dataset.partyView==='rooms')$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(selectedMovieState(movie))showMedia({movie});else showMedia(data.room);updateHostUi();if(app.dataset.partyView==='rooms'&&currentRoom==='watchroom-'+activeWatchRoom.id)renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
+ socket?.on('watchroom:join-error',data=>{if(data?.error==='room_not_found')rejectWatchJoin(data.roomId,roomNotFound);});
+ socket?.on('watchroom:joined',data=>{if(!activeWatchRoom.joined||data?.room?.id!==activeWatchRoom.id)return;clearTimeout(watchJoinTimer);activeWatchRoom={...activeWatchRoom,...data.room,name:data.room.name||activeWatchRoom.name,isHost:Boolean(data.isHost),joined:true,admitted:true};roomCall?.setRoom(activeWatchRoom.id);$('#sv103RoomTitle').textContent=activeWatchRoom.name;if(app.dataset.partyView==='rooms')$('#sv100Title').textContent=activeWatchRoom.name;const movie=data.room.syncedMovie;if(selectedMovieState(movie))showMedia({movie});else showMedia(data.room);updateConnection();if(app.dataset.partyView==='rooms'&&currentRoom==='watchroom-'+activeWatchRoom.id)renderMessages((data.messages||[]).map(m=>({author:m.name,text:m.text,createdAt:m.at})));startQueuedMovie();});
  socket?.on('watchroom:host',data=>{if(!activeWatchRoom.joined||(data.roomId&&data.roomId!==activeWatchRoom.id))return;activeWatchRoom.isHost=Boolean(data.isHost);updateHostUi();});
  socket?.on('watchroom:viewers',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;const people=Math.max(0,Number(data.viewers)||0);$('#sv103ViewerCount').textContent=people;$('#sv100MemberCount').textContent=people+(people===1?' person':' people');});
  socket?.on('watchroom:members',data=>{if(data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined)return;$('#sv100MembersList').innerHTML=(data.members||[]).map(m=>'<p><span>'+esc(String(m.name||'Guest').slice(0,1).toUpperCase())+'</span><b>'+esc(m.name||'Guest')+'</b>'+(m.isHost?'<small>Host</small>':'')+'</p>').join('');});
@@ -416,8 +465,10 @@
  socket?.on('watchroom:movie-sync',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!data.movie)return;activeWatchRoom.syncedMovie=data.movie;showMedia({movie:data.movie});});
  socket?.on('watchroom:movie-sync-state',data=>{if(!connected()||data?.roomId!==activeWatchRoom.id||!activeWatchRoom.joined||!syncedTransport()||(data.movieId&&String(data.movieId)!==String(activeWatchRoom.syncedMovie.movieId)))return;const movie=activeWatchRoom.syncedMovie;if(movie.type==='tv'&&(mediaKey(data)!==mediaKey(movie)||data.requestId!==movie.requestId))return;if(data.requestId&&movie.requestId&&data.requestId!==movie.requestId)return;activeWatchRoom.sync=data.sync;applyNativeSync(false);});
  let clock;function startClock(){clearInterval(clock);clock=setInterval(()=>{if(activeWatchRoom.joined&&activeWatchRoom.sync&&connected()){$('#sv103Timer').textContent=formatTime(targetSeconds(activeWatchRoom.sync));applyNativeSync(false);}},1000);}startClock();
- window.addEventListener('pagehide',()=>{clearTimeout(communityTypingTimer);for(const pending of pendingMessages.values())clearTimeout(pending.timer);pendingMessages.clear();communitySearchEpoch++;communityDirectoryEpoch++;roomCall?.setRoom('');disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;featuredShowsEpoch++;lobbySearchEpoch++;roomChoiceEpoch++;roomPickerEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
- window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;startClock();socket?.connect?.();if(selectionPending&&wantedMovieId)loadLobbyMovie(wantedMovieId,wantedMovieType,wantedSeason,wantedEpisode);loadFeaturedMovies();loadFeaturedShows();}});
- profile();setupReturnLink();updateConnection();loadCommunityDirectory();restoreLobbySelection();loadFeaturedMovies();loadFeaturedShows();loadPermissions().then(()=>{const id=app.dataset.roomId;if(id){switchTab('rooms');if(connected())joinInvite(id);else pendingInvite=id;}else if(app.dataset.initialTab==='rooms')switchTab('rooms');else joinRoom(new URLSearchParams(location.search).get('room')||'channel-general');if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});renderRooms();
+ window.addEventListener('pagehide',()=>{clearTimeout(communityTypingTimer);clearTimeout(watchJoinTimer);for(const pending of pendingMessages.values())clearTimeout(pending.timer);pendingMessages.clear();communitySearchEpoch++;communityDirectoryEpoch++;roomCall?.setRoom('');disposed=true;joinEpoch++;listEpoch++;movieEpoch++;selectionEpoch++;featuredEpoch++;featuredShowsEpoch++;lobbySearchEpoch++;roomChoiceEpoch++;roomPickerEpoch++;destroyMedia();closeCall();socket?.disconnect?.();clearInterval(clock);});
+ window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;startClock();if(pendingInvite)joinInvite(pendingInvite.room.id);socket?.connect?.();if(selectionPending&&wantedMovieId)loadLobbyMovie(wantedMovieId,wantedMovieType,wantedSeason,wantedEpisode);loadFeaturedMovies();loadFeaturedShows();}});
+ profile();setupReturnLink();updateConnection();loadCommunityDirectory();restoreLobbySelection();loadFeaturedMovies();loadFeaturedShows();loadPermissions().then(()=>{if(app.dataset.denied)toast('Hosting is unavailable here. You can still join a party.',true);});
+ if(app.dataset.roomId){switchTab('rooms');joinInvite(app.dataset.roomId);}else if(app.dataset.initialTab==='rooms')switchTab('rooms');else joinRoom(new URLSearchParams(location.search).get('room')||'channel-general');
+ renderRooms();
  window.SwiflySocial=Object.freeze({switchTab,joinRoom,renderRooms,openNativeWatchRoom,permissions:()=>({...permissions})});
 })();
