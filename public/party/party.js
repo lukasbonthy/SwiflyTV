@@ -246,9 +246,10 @@
   catch{if(generation===roomPickerEpoch){roomPickerKey='';target.innerHTML='<p class="partyFormStatus">Episode choices are unavailable. Try choosing the TV show again.</p>';}}
  }
  function showMedia(media={}){const movie=selectedMovieState(media.movie)?media.movie:null;activeWatchRoom.syncedMovie=movie;renderNativeMedia({...media,movie});renderRoomFilm(movie);renderRoomEpisodes(movie);activeWatchRoom.sync=movie?.sync||null;if(movie)applyNativeSync(true);}
+ function canRetrySharedLocally(){return activeWatchRoom.admitted&&connected()&&activeWatchRoom.syncedMovie?.status==='ready';}
  function updateHostUi(){
   const host=activeWatchRoom.joined&&activeWatchRoom.isHost&&connected();app.dataset.partyHost=host?'true':'false';
-  partyPlayer?.setRemoteMode({enabled:syncedTransport(),isHost:host,manual:!syncedTransport()});
+  partyPlayer?.setRemoteMode({enabled:syncedTransport(),isHost:host,manual:!syncedTransport(),allowLocalRetry:canRetrySharedLocally()});
   $$('.hostOnly').forEach(el=>{el.disabled=!host;if(el.matches('details,form'))el.hidden=!host;el.querySelectorAll('input,button,select').forEach(n=>n.disabled=!host);});
   $$('[data-party-room-episodes] a').forEach(link=>link.setAttribute('aria-disabled',String(!host)));
   const episodeNote=$('.partyEpisodeHostNote');if(episodeNote)episodeNote.textContent=host?'Choose an episode for everyone.':'The host chooses the episode for everyone.';
@@ -347,6 +348,11 @@
  function directMediaUrl(value){
   try{const url=new URL(String(value||''),location.href);return ['http:','https:'].includes(url.protocol)&&/\.(?:m3u8|mpd|mp4|webm|mov|m4v|ogv|ogg|mkv|avi|mp3|m4a|wav|flac)$/i.test(url.pathname)?String(value):'';}catch{return '';}
  }
+ function retrySharedLocally(){
+  if(canRetrySharedLocally()&&partyPlayer.getState().status==='error'){
+   partyPlayer.loadSource(partySourceData,{resumeAt:targetSeconds(activeWatchRoom.sync)});
+  }
+ }
  function renderNativeMedia(media={}){
   const root=$('#sv103Player');if(!root)return;
   const movie=selectedMovieState(media.movie)?media.movie:null,data={...media,...movie};
@@ -360,12 +366,12 @@
     const isCurrent=mediaGuard(partyPlayerRoot),listen=(name,fn)=>{const node=partyPlayerRoot,handler=event=>{if(isCurrent())fn(event);};node.addEventListener('swiflyplayer:'+name,handler);partyMediaListeners.push(()=>node.removeEventListener('swiflyplayer:'+name,handler));};
     listen('action',event=>{const {action,time}=event.detail||{};if(!syncedTransport()||!activeWatchRoom.isHost||!['play','pause','set'].includes(action)||!Number.isFinite(time)||time<0)return;socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,...transportIdentity(),action,time,clientTime:time,name:username,intent:'user'});});
     listen('ready',()=>applyNativeSync(true));
-    listen('retry',()=>{if(syncedTransport()){if(activeWatchRoom.isHost)socket.emit('watchroom:movie-select',{roomId:activeWatchRoom.id,...selection(partySourceData),...transportIdentity(),name:username,retry:true});}else if(partySourceData)partyPlayer.loadSource(partySourceData,{resumeAt:partyPlayer.getState().currentTime});});
-    listen('sync',()=>{if(syncedTransport())socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,...transportIdentity(),action:'sync-me',name:username});});
+    listen('retry',()=>{if(syncedTransport()){if(activeWatchRoom.isHost)socket.emit('watchroom:movie-select',{roomId:activeWatchRoom.id,...selection(partySourceData),...transportIdentity(),name:username,retry:true});else retrySharedLocally();}else if(partySourceData)partyPlayer.loadSource(partySourceData,{resumeAt:partyPlayer.getState().currentTime});});
+    listen('sync',()=>{if(syncedTransport()){retrySharedLocally();socket.emit('watchroom:movie-control',{roomId:activeWatchRoom.id,...transportIdentity(),action:'sync-me',name:username});}});
    }
    app.dataset.partyMedia='video';const dock=$('#sv103ControlDock')||$('.sv103ControlDock');if(dock)dock.hidden=true;
    partySourceData={...data,...(!data.playbackUrl&&src?{playbackUrl:src}:{})};
-   partyPlayer.setRemoteMode({enabled:Boolean(movie),isHost:activeWatchRoom.isHost&&connected(),manual:!movie});
+   partyPlayer.setRemoteMode({enabled:Boolean(movie),isHost:activeWatchRoom.isHost&&connected(),manual:!movie,allowLocalRetry:canRetrySharedLocally()});
    const video=partyPlayerRoot.querySelector('[data-player-video]');if(data.title){video.setAttribute('aria-label',String(data.title));partyPlayerRoot.setAttribute('aria-label',String(data.title));}const poster=artwork(data.backdrop||data.poster);if(poster)video.poster=poster;
    partyPlayer.loadSource(partySourceData,{resumeAt:targetSeconds(movie?.sync)});return;
   }

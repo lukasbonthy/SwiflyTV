@@ -5,12 +5,19 @@ const {playerMarkup} = require('../ui/player');
 const {watchPartyMarkup, partyBrowseMarkup} = require('../ui/watch-party');
 test.afterEach(cleanup);
 function setup(path='/watch/movie/101?mode=movie', room={id:'room-one',name:'Friday film',syncedMovie:{status:'idle',movieId:'101'}}) {
- const env=browser(playerMarkup({id:'101',title:'Arrival',type:'movie',mode:'movie',partyPanelHtml:watchPartyMarkup({movieId:'101',title:'Arrival'})}),{path});
+ const provider=new URL(path,'http://localhost:3000').searchParams.get('provider')||'';
+ const env=browser(playerMarkup({id:'101',title:'Arrival',type:'movie',mode:'movie',provider,partyPanelHtml:watchPartyMarkup({movieId:'101',title:'Arrival'})}),{path});
  const w=env.window, handlers={}, sent=[], calls=[];
  const socket={connected:true,on(name,fn){handlers[name]=fn;return this;},off(name){delete handlers[name];},emit(name,data){sent.push({name,data});},disconnect(){this.connected=false;},connect(){this.connected=true;}};
  w.io=()=>socket;
- w.SwiflyPlayer={setRemoteMode:value=>calls.push(['remote',value]),loadSource:value=>calls.push(['source',value]),resolve:()=>calls.push(['resolve']),pause:value=>calls.push(['pause',value]),play:value=>calls.push(['play',value]),seek:(time,value)=>calls.push(['seek',time,value]),getState:()=>({currentTime:0,paused:true,ready:true})};
- w.fetch=async url=>({ok:true,json:async()=>String(url).includes('/create')?{ok:true,room}:{ok:true,room}});
+ w.SwiflyPlayer={setRemoteMode:value=>calls.push(['remote',value]),loadSource:(value,options)=>calls.push(['source',value,options]),resolve:()=>calls.push(['resolve']),pause:value=>calls.push(['pause',value]),play:value=>calls.push(['play',value]),seek:(time,value)=>calls.push(['seek',time,value]),getState:()=>({currentTime:0,paused:true,ready:true})};
+ w.fetch=async (url,init)=>{
+  if(String(url).includes('/create')){
+   const body=JSON.parse(init.body);
+   if(body.provider)room.syncedMovie.provider=body.provider;
+  }
+  return {ok:true,json:async()=>({ok:true,room})};
+ };
  const receive=(name,data)=>handlers[name]?.(data);
  env.window.boot('player/watch-party.js');
  return {...env,w,socket,handlers,sent,calls,room,receive};
@@ -120,6 +127,45 @@ test('Host actions and Retry use the active room and current movie',async()=>{
  app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:retry',{bubbles:true,detail:{mediaId:'101'}}));
  assert.deepEqual(JSON.parse(JSON.stringify(env.sent.find(x=>x.name==='watchroom:movie-control').data)),{roomId:'room-one',action:'set',time:32,clientTime:32,intent:'user'});
  assert.equal(env.sent.find(x=>x.name==='watchroom:movie-select').data.retry,true);
+});
+test('Creating a room uses the pinned provider or the verified solo server',async()=>{
+ for(const [path,server,provider] of [
+  ['/watch/movie/101?mode=movie&provider=pinned','solo','pinned'],
+  ['/watch/movie/101?mode=movie','solo','solo']
+ ]){
+  const env=setup(path);
+  env.w.SwiflyPlayer.getState=()=>({currentTime:0,paused:true,ready:true,server});
+  env.w.document.querySelector('[data-player-party-open]').click();
+  env.w.document.querySelector('[data-party-create-form]').dispatchEvent(new env.w.Event('submit',{bubbles:true,cancelable:true}));
+  await tick();ack(env,true);
+  assert.equal(env.sent.find(event=>event.name==='watchroom:movie-select').data.provider,provider);
+  env.w.document.querySelector('.svPlayerPage').dispatchEvent(new env.w.CustomEvent('swiflyplayer:retry'));
+  assert.equal(env.sent.find(event=>event.name==='watchroom:movie-select'&&event.data.retry).data.provider,provider);
+ }
+});
+test('An inherited room keeps the server-confirmed provider',async()=>{
+ const room={id:'room-one',name:'Friday film',syncedMovie:{status:'idle',movieId:'101',provider:'room-provider'}};
+ const env=setup('/watch/movie/101?mode=movie&provider=guest-provider',room);
+ await join(env);ack(env,false);
+ env.receive('watchroom:host',{roomId:room.id,isHost:true});
+ assert.equal(env.sent.find(event=>event.name==='watchroom:movie-select').data.provider,'room-provider');
+});
+test('A guest retries a ready source at the current shared clock on their device',async()=>{
+ const env=setup();
+ env.room.syncedMovie={status:'ready',type:'movie',movieId:'101',requestId:'shared-source',playbackUrl:'/film.mp4',sync:{playing:false,offset:15}};
+ await join(env);ack(env,false);
+ assert.equal(env.calls.findLast(row=>row[0]==='remote')[1].allowLocalRetry,true);
+ env.receive('watchroom:movie-sync-state',{roomId:env.room.id,movieId:'101',requestId:'shared-source',sync:{playing:false,offset:52}});
+ env.w.SwiflyPlayer.getState=()=>({currentTime:0,paused:true,ready:false,status:'error'});
+ const app=env.w.document.querySelector('.svPlayerPage');
+ const sent=env.sent.length;
+ app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:retry'));
+ const [,source,options]=env.calls.findLast(row=>row[0]==='source');
+ assert.equal(source.playbackUrl,'/film.mp4');
+ assert.equal(options.resumeAt,52);
+ assert.equal(env.sent.length,sent);
+ env.receive('watchroom:movie-sync',{roomId:env.room.id,movie:{status:'error',movieId:'101',code:'no_source'}});
+ assert.equal(env.calls.findLast(row=>row[0]==='remote')[1].allowLocalRetry,false);
 });
 test('Room source states replace media honestly and foreign room events are ignored',async()=>{
  const env=setup();await join(env);ack(env,false);env.calls.length=0;

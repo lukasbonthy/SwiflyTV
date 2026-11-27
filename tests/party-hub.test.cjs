@@ -166,7 +166,56 @@ test('Shared preparing and failed sources keep Retry host only and a ready repla
  const movie={movieId:'101',status:'ready',playbackUrl:'/old.mp4'};env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});const old=env.readyVideo();
  env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'loading',playbackUrl:'/stale.mp4'}});const root=d.querySelector('.svPlayerEmbedded');assert.equal(root.dataset.playerState,'loading');assert.equal(old.getAttribute('src'),null);assert.notEqual(d.getElementById('sv103Video'),old);
  env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie:{movieId:'102',status:'error',code:'timeout'}});assert.equal(root.dataset.playerState,'error');d.querySelector('[data-player-retry]').click();assert(env.sent.some(e=>e.name==='watchroom:movie-select'&&e.data.movieId==='102'&&e.data.retry===true));
- env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});const count=env.sent.length;d.querySelector('[data-player-retry]').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));assert.equal(env.sent.length,count);env.finish();
+ env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});const count=env.sent.length;const retry=d.querySelector('[data-player-retry]');assert.equal(retry.disabled,true);retry.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));assert.equal(env.sent.length,count);env.finish();
+});
+test('A Party Hub guest can retry a local load failure at the shared clock',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});
+ const movie={movieId:'101',status:'ready',playbackUrl:'/shared.mp4',sync:{playing:false,offset:5}};
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});
+ const old=env.readyVideo(),root=d.querySelector('.svPlayerEmbedded');
+ env.socket.receive('watchroom:movie-sync-state',{roomId:room.id,sync:{playing:false,offset:42}});
+ old.dispatchEvent(new w.Event('error'));
+ assert.equal(root.dataset.playerState,'error');
+ const count=env.sent.length,retry=d.querySelector('[data-player-retry]');
+ assert.equal(retry.disabled,false);
+ retry.click();
+ const recovered=env.readyVideo();
+ assert.notEqual(recovered,old);
+ assert.equal(recovered.getAttribute('src'),'/shared.mp4');
+ assert.equal(recovered.currentTime,42);
+ assert.equal(root.dataset.playerState,'ready');
+ assert.equal(root.dataset.playerFailureCode,undefined);
+ assert.equal(d.querySelector('[data-player-play]').disabled,true);
+ assert.equal(d.querySelector('[data-player-seek]').disabled,true);
+ assert.equal(env.sent.length,count);
+ assert(!env.calls.some(call=>call.url.includes('proxy-video-wait')));
+ env.finish();
+});
+test('A room decoder can try one supplied alternative locally for a source snapshot',async()=>{
+ const env=setup();await enter(env);const w=env.window,d=w.document;
+ env.socket.receive('watchroom:host',{roomId:room.id,isHost:false});
+ const movie={movieId:'101',requestId:'room-source',status:'ready',playbackUrl:'/main.mp4',streamCodec:'hevc',playbackSources:[
+  {playbackUrl:'/alternate.mp4',streamCodec:'h264'},
+  {playbackUrl:'/unused.mp4',streamCodec:'h264'}
+ ],sync:{playing:false,offset:9}};
+ env.socket.receive('watchroom:movie-sync',{roomId:room.id,movie});
+ const count=env.sent.length,error=()=>{
+  const video=d.getElementById('sv103Video');
+  Object.defineProperty(video,'error',{value:{code:3}});
+  video.dispatchEvent(new w.Event('error'));
+ };
+ assert.equal(d.getElementById('sv103Video').getAttribute('src'),'/main.mp4');
+ error();
+ const recovered=env.readyVideo();
+ assert.equal(recovered.getAttribute('src'),'/alternate.mp4');
+ assert.equal(recovered.currentTime,9);
+ error();
+ assert.equal(d.querySelector('.svPlayerEmbedded').dataset.playerState,'error');
+ assert.equal(recovered.getAttribute('src'),null);
+ assert.equal(env.sent.length,count);
+ assert(!env.calls.some(call=>call.url.includes('proxy-video-wait')));
+ env.finish();
 });
 test('Device preview retains TV focus and Back closes it without navigating away',async()=>{
  const env=await ready(setup()),w=env.window,d=w.document;let stopped=0,backCalls=0;

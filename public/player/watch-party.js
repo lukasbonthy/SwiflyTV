@@ -21,7 +21,8 @@
  const mediaKey=value=>{const media=selection(value);return media?[media.type,media.movieId,media.season||'',media.episode||''].join(':'):'';};
  let renderedEpisodeKey=mediaKey(currentMedia),pendingEpisodeKey='';
  const transportIdentity=()=>currentSnapshot?.type?{...currentMedia,requestId:currentSnapshot.requestId||''}:{};
- const selectIdentity=()=>pageType==='tv'?{...currentMedia}:{movieId};
+ const sourceSelection=(media,provider=room?.syncedMovie?.provider)=>provider?{...media,provider}:media;
+ const selectIdentity=()=>sourceSelection(pageType==='tv'?{...currentMedia}:{movieId});
  function serverClock(data){if(Number.isFinite(data?.serverTime)&&data.serverTime>0)serverOffset=data.serverTime-Date.now();}
  const setupStatus=(message)=>{const el=browse?$('[data-party-setup-status]'):$('[data-party-setup-status]',dialog);if(el)el.textContent=message;};
  const status=(message)=>{const el=$('[data-party-status]',panel);if(el)el.textContent=message;};
@@ -51,13 +52,16 @@
   location.assign(film?roomUrl(id,film):'/social?tab=watchrooms&roomId='+encodeURIComponent(id));return true;
  }
  function setUrl(active) {if(!app)return;const url=new URL(location.href);url.searchParams.delete('party');if(active)url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');if(currentMedia.type==='tv'){url.searchParams.set('s',currentMedia.season);url.searchParams.set('e',currentMedia.episode);}history.replaceState(history.state,'',url.pathname+url.search+url.hash);}
+ function updateRemoteMode() {
+  player()?.setRemoteMode?.({enabled:Boolean(roomId),isHost:Boolean(isHost&&joined&&online),allowLocalRetry:Boolean(joined&&online&&readyMovie)});
+ }
  function update() {
   if(!panel)return;panel.hidden=!roomId;app.dataset.partyActive=roomId?'true':'false';
   $('[data-party-room-name]',panel).textContent=room?.name||'Movie night';$('[data-party-role]',panel).textContent=joined&&isHost?'You’re hosting':'Host controls playback';
   $('[data-party-connection]',panel).textContent=joined&&online?'Together · connected':roomId?'Reconnecting…':'Connecting…';
   $('[data-party-invite]',panel).disabled=!joined;$('[data-party-sync]',panel).disabled=!joined||!online;
   const form=$('[data-party-chat-form]',panel);form.querySelector('input').disabled=!joined||!online;form.querySelector('button').disabled=!joined||!online;
-  player()?.setRemoteMode?.({enabled:Boolean(roomId),isHost:Boolean(isHost&&joined&&online)});
+  updateRemoteMode();
   const picker=app.querySelector('.svPlayerEpisodePicker');if(picker){let note=picker.querySelector('[data-party-episode-note]');if(!note){note=document.createElement('p');note.dataset.partyEpisodeNote='';note.className='svPlayerPartyEpisodeNote';picker.prepend(note);}note.hidden=!roomId;note.textContent=isHost&&joined&&online?'Choose an episode for everyone.':'The host chooses the episode for everyone.';}
   for(const link of app.querySelectorAll('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]')){const stale=link.closest('[data-player-episode-navigation]')&&renderedEpisodeKey!==mediaKey(currentMedia);if(roomId||stale)link.setAttribute('aria-disabled',String(Boolean(stale)||!joined||!online||!isHost));else link.removeAttribute('aria-disabled');if(link.matches('a')){const url=new URL(link.href,location.href);if(roomId)url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');if(app.dataset.playerProvider)url.searchParams.set('provider',app.dataset.playerProvider);link.href=url.pathname+url.search;}}
   for(const link of app.querySelectorAll('[data-player-mode-link]')){const url=new URL(link.href,location.href);if(currentMedia.type==='tv'){url.searchParams.set('s',currentMedia.season);url.searchParams.set('e',currentMedia.episode);}if(roomId&&url.searchParams.get('mode')==='movie')url.searchParams.set('roomId',roomId);else url.searchParams.delete('roomId');link.href=url.pathname+url.search+url.hash;}
@@ -71,10 +75,13 @@
   while(log.children.length>100)log.firstElementChild.remove();if(nearEnd)log.scrollTop=log.scrollHeight;
  }
  function clearConversation(){if(!panel)return;messageKeys.clear();const log=$('[data-party-messages]',panel),empty=document.createElement('p');empty.className='svPartyEmpty';empty.textContent='Better with company. Say hello.';log.replaceChildren(empty);$('[data-party-members]',panel).replaceChildren();$('[data-party-member-count]',panel).textContent='Who’s here';$('[data-party-chat-form] input',panel).value='';}
+ function syncPosition() {
+  const offset=Math.max(0,Number(sync?.offset)||0),starts=Number(sync?.startedAt)||0;
+  return offset+(sync?.playing&&starts>0?Math.max(0,Date.now()+serverOffset-starts)/1000:0);
+ }
  function applySync() {
   if(!joined||!online||!sync||!player())return;const current=player().getState();if(!current.ready)return;
-  const offset=Math.max(0,Number(sync.offset)||0),starts=Number(sync.startedAt)||0;
-  const now=Date.now()+serverOffset,expected=offset+(sync.playing&&starts>0?Math.max(0,now-starts)/1000:0),playing=Boolean(sync.playing)&&(!starts||now>=starts);
+  const starts=Number(sync.startedAt)||0,expected=syncPosition(),playing=Boolean(sync.playing)&&(!starts||Date.now()+serverOffset>=starts);
   if(Math.abs(expected-current.currentTime)>2.5)player().seek(expected,{remote:true});
   if(playing&&current.paused)player().play({remote:true});else if(!playing&&!current.paused)player().pause({remote:true});
  }
@@ -100,14 +107,23 @@
  function applyMovie(movie) {
   if(!joined||!movie)return;const selected=selection(movie);if(!selected)return;if(selected.movieId!==movieId||selected.type!==pageType){navigateRoom({...room,syncedMovie:movie});return;}
   if(movie.status!=='idle')pendingSelect=false;
-  currentMedia=selected;currentSnapshot=movie;room.syncedMovie=movie;updateEpisode();
+  currentMedia=selected;currentSnapshot=movie;room.syncedMovie=movie;readyMovie=movie.status==='ready'?movie:null;
+  if(selected.type==='tv')updateEpisode();else updateRemoteMode();
   if(movie.status==='ready'){
-   readyMovie=movie;
    const key=[mediaKey(movie),movie.requestId||'',movie.playbackUrl||movie.hlsProxyUrl||movie.proxyVideo||movie.m3u8||''].join('|');
-   if(key!==sourceKey||player()?.getState().status==='error'){sourceKey=key;player()?.loadSource({...movie,status:'ok'},{resumeAt:Math.max(0,Number(movie.sync?.offset)||0)});}
-   sync=movie.sync||sync;status('');applySync();
-  }else if(movie.status==='loading'){sourceKey='';readyMovie=null;sync=null;player()?.loadSource({...movie,status:'loading',message:'Getting your party’s '+(pageType==='tv'?'episode':'film')+' ready…'});status('The host is preparing playback.');}
-  else if(movie.status==='error'){sourceKey='';readyMovie=null;sync=null;player()?.loadSource({...movie,status:'error',message:movie.message||'Playback could not start. The host can retry.'});status(isHost?'Retry playback from the player.':'The host can retry playback.');}
+   sync=movie.sync||sync;
+   status('');
+   if(key!==sourceKey||player()?.getState()?.status==='error'){sourceKey=key;player()?.loadSource({...movie,status:'ok'},{resumeAt:syncPosition()});}
+   applySync();
+  }else if(movie.status==='loading'){sourceKey='';sync=null;player()?.loadSource({...movie,status:'loading',message:'Getting your party’s '+(pageType==='tv'?'episode':'film')+' ready…'});status('The host is preparing playback.');}
+  else if(movie.status==='error'){sourceKey='';sync=null;player()?.loadSource(movie);reportSharedFailure();}
+ }
+ function reportSharedFailure() {
+  status(isHost?'The party’s source failed. You can retry in the player.':'The party’s source failed. Your host can retry.');
+ }
+ function retryLocalMovie() {
+  if(!joined||!online||!readyMovie||player()?.getState()?.status!=='error')return;
+  status('');player().loadSource({...readyMovie,status:'ok'},{resumeAt:syncPosition()});
  }
  function joinFailed(message) {
   clearTimeout(ackTimer);
@@ -158,7 +174,7 @@
    if(disposed||suspended||!joined||data?.roomId!==roomId)return;const list=$('[data-party-members]',panel),members=Array.isArray(data.members)?data.members:[];list.replaceChildren();
    members.slice(0,60).forEach(member=>{const item=document.createElement('li');item.textContent=String(member.name||'Guest').slice(0,40)+(member.isHost?' · Host':'');list.append(item);});$('[data-party-member-count]',panel).textContent=members.length+' '+(members.length===1?'person':'people')+' here';
   });
-  socket.on('watchroom:host',data=>{if(!disposed&&!suspended&&joined&&data?.roomId===roomId){isHost=Boolean(data.isHost);update();startSelectedMedia();}});
+  socket.on('watchroom:host',data=>{if(!disposed&&!suspended&&joined&&data?.roomId===roomId){isHost=Boolean(data.isHost);update();if(currentSnapshot?.status==='error')reportSharedFailure();startSelectedMedia();}});
   return socket;
  }
  function attach(next,created=false) {
@@ -191,7 +207,8 @@
  function cancelSetup() {if(roomId)return;++epoch;++setupEpoch;setupLoading=false;abortRequests();busy(false);setupStatus('');refreshSoloEpisode();}
  async function create(event) {
   event.preventDefault();if(roomId||disposed||suspended||setupLoading||setupError)return;const current=++epoch;abortRequests();busy(true);setupStatus('Creating your party…');
-  try {const data=await request('/api/social/watchrooms/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:String(new FormData(event.currentTarget).get('roomName')||'Movie night').slice(0,80),creator:username,...setupMedia})});if(current!==epoch||disposed||suspended)return;currentMedia={...setupMedia};attach(data.room,true);}
+  const provider=app.dataset.playerProvider||player()?.getState()?.server||'';
+  try {const data=await request('/api/social/watchrooms/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:String(new FormData(event.currentTarget).get('roomName')||'Movie night').slice(0,80),creator:username,...sourceSelection(setupMedia,provider)})});if(current!==epoch||disposed||suspended)return;currentMedia={...setupMedia};attach(data.room,true);}
   catch(error){if(current===epoch&&!disposed&&!suspended)setupStatus(error.message);}finally{if(current===epoch)busy(false);}
  }
  async function directory() {
@@ -205,13 +222,14 @@
  if(dialog){$('[data-party-join-form]',dialog).addEventListener('submit',event=>{event.preventDefault();join(new FormData(event.currentTarget).get('invite'));});$('[data-party-create-form]',dialog).addEventListener('submit',create);$('[data-party-dialog-close]',dialog).addEventListener('click',()=>dialog.close());dialog.addEventListener('cancel',cancelSetup);dialog.addEventListener('close',cancelSetup);}
  $('[data-party-setup-season]',dialog)?.addEventListener('change',event=>loadSetupEpisodes(event.target.value,'1'));$('[data-party-setup-episode]',dialog)?.addEventListener('change',event=>{setupMedia.episode=event.target.value;});
  app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-mode-link]');if(!link||!roomId||event.defaultPrevented||event.button>0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;if(new URL(link.href,location.href).searchParams.get('mode')==='movie')event.preventDefault();});
- app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]');if(!link||!link.matches('a'))return;if(link.closest('[data-player-episode-navigation]')&&renderedEpisodeKey!==mediaKey(currentMedia)){event.preventDefault();return;}if(!roomId)return;event.preventDefault();if(!joined||!online||!isHost){status('The host chooses the episode for everyone.');return;}const url=new URL(link.href,location.href),selected=selection({movieId,type:'tv',season:url.searchParams.get('s'),episode:url.searchParams.get('e')});if(selected)socket.emit('watchroom:movie-select',{roomId,...selected,name:username});});
+ app?.addEventListener('click',event=>{const link=event.target.closest('[data-player-episode-link],[data-player-season-link],[data-player-episode-next],[data-player-episode-previous]');if(!link||!link.matches('a'))return;if(link.closest('[data-player-episode-navigation]')&&renderedEpisodeKey!==mediaKey(currentMedia)){event.preventDefault();return;}if(!roomId)return;event.preventDefault();if(!joined||!online||!isHost){status('The host chooses the episode for everyone.');return;}const url=new URL(link.href,location.href),selected=selection({movieId,type:'tv',season:url.searchParams.get('s'),episode:url.searchParams.get('e')});if(selected)socket.emit('watchroom:movie-select',{roomId,...sourceSelection(selected),name:username});});
  $('[data-player-party-open]')?.addEventListener('click',open);$('[data-party-leave]',panel)?.addEventListener('click',leave);
- $('[data-party-sync]',panel)?.addEventListener('click',()=>{if(joined&&online){if(player()?.getState().status==='error'&&readyMovie)applyMovie(readyMovie);socket.emit('watchroom:movie-control',{roomId,...transportIdentity(),action:'sync-me'});}});
+ $('[data-party-sync]',panel)?.addEventListener('click',()=>{if(joined&&online){retryLocalMovie();socket.emit('watchroom:movie-control',{roomId,...transportIdentity(),action:'sync-me'});}});
  $('[data-party-chat-form]',panel)?.addEventListener('submit',event=>{event.preventDefault();if(!joined||!online)return;const input=event.currentTarget.querySelector('input'),text=input.value.trim().slice(0,220);if(!text)return;socket.emit('watchroom:message',{roomId,name:username,text});input.value='';});
  $('[data-party-invite]',panel)?.addEventListener('click',async()=>{if(!joined)return;const url=location.origin+roomUrl();try{await navigator.clipboard.writeText(url);status('Invite copied. Send it to your friends.');}catch{status('Your invite: '+url);}});
  app?.addEventListener('swiflyplayer:action',event=>{if(!joined||!online||!isHost||!roomId||!['play','pause','set'].includes(event.detail?.action))return;const time=Number(event.detail.time);if(!Number.isFinite(time)||time<0)return;socket.emit('watchroom:movie-control',{roomId,...transportIdentity(),action:event.detail.action,time,clientTime:time,intent:'user'});});
- app?.addEventListener('swiflyplayer:retry',()=>{if(joined&&online&&isHost)socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),...transportIdentity(),name:username,retry:true});});
+ app?.addEventListener('swiflyplayer:retry',()=>{if(!joined||!online)return;if(isHost)socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),...transportIdentity(),name:username,retry:true});else retryLocalMovie();});
+ app?.addEventListener('swiflyplayer:source-failure',()=>{if(joined&&online&&readyMovie)status('Playback failed on this device. You can retry in the player.');});
  app?.addEventListener('swiflyplayer:ready',applySync);
  $('[data-party-directory]')?.addEventListener('toggle',event=>{if(event.currentTarget.open)directory();});$('[data-party-refresh]')?.addEventListener('click',directory);
  function suspend(){call?.setRoom('');++epoch;++listEpoch;abortRequests();clearTimeout(ackTimer);clearInterval(clock);clock=null;if(roomId&&socket?.connected)socket.emit('watchroom:leave');socket?.disconnect?.();joined=false;online=false;suspended=true;}

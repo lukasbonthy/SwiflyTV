@@ -38,7 +38,7 @@
     let glass=null,glassEnabled=null,glassUnavailable=false;
     let audioOptions=[],applyingAudio=false,observedAudio=null,observedText=null;
     let captionOptions=[],captionPreference=null,captionActive='-1',applyingCaptions=false;
-    let sourceOptions=[],sourceSnapshotKey='',activeSourceData=null,failedPreferenceMedia='';
+    let sourceOptions=[],sourceSnapshotKey='',activeSourceData=null,failedPreferenceMedia='',roomDecodeFallback=null;
     let providersLoaded=false,serverChanging=false;
     const history=window.SwiflyContinue,historyOwner=history?.profileId?.();
     const entryQuery=new URLSearchParams(location.search);
@@ -75,6 +75,7 @@
     const tasks=new Set(),listeners=[],mediaListeners=[],libraryListeners=[];
     const alive = token => !destroyed && !suspended && app.isConnected && video.isConnected && token===generation;
     const locked = () => remoteMode.enabled && !remoteMode.isHost;
+    const canRetry = () => !locked() || (remoteMode.allowLocalRetry && phase==='error');
     const listen = (node,name,fn,bucket=listeners) => {node?.addEventListener(name,fn);bucket.push(()=>node?.removeEventListener(name,fn));};
     const clearListeners = bucket => {for(const remove of bucket.splice(0))remove();};
     const transparencyQuery=window.matchMedia?.('(prefers-reduced-transparency: reduce)');
@@ -151,7 +152,8 @@
     }[data?.code] || 'The '+mediaName()+' is unavailable right now. Try again in a moment.');
     const cancelTasks = category => {for(const task of [...tasks])if(!category||task.category===category)task.cancel();};
     function getState() {
-      return {currentTime:number(video?.currentTime,0),paused:phase==='ended'||phase==='error'||!video||video.paused,duration:video?.duration===Infinity?Infinity:number(video?.duration,0),ready:playable&&!destroyed&&!suspended,source,mediaId,type:mediaType,status:phase};
+      const ready=playable&&!destroyed&&!suspended, server=ready&&!managed&&!remoteMode.enabled?sourceData?.server:'';
+      return {currentTime:number(video?.currentTime,0),paused:phase==='ended'||phase==='error'||!video||video.paused,duration:video?.duration===Infinity?Infinity:number(video?.duration,0),ready,source,mediaId,type:mediaType,status:phase,...(typeof server==='string'&&/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(server)?{server}:{})};
     }
     const emitState = () => dispatch('state',getState());
     const television=()=>document.documentElement.dataset.svTv==='true'&&document.body.classList.contains('swifly-tv-focus-mode');
@@ -219,7 +221,7 @@
       stage.setAttribute('aria-label',mediaType==='tv'?'Episode player':'Movie player');find('seek').setAttribute('aria-label','Seek through '+mediaName());
       play.querySelector('.svPlayerIcon path')?.setAttribute('d',paused?'m9 5 11 7-11 7V5Z':'M8 5v14M16 5v14');
       for(const name of ['play','backward','forward'])find(name).disabled=!playable||locked();
-      find('retry').disabled=locked();find('speed').disabled=remoteMode.enabled||app.dataset.playerScreening==='true';
+      find('retry').disabled=!canRetry();find('speed').disabled=remoteMode.enabled||app.dataset.playerScreening==='true';
       find('volume').value=String(video.muted?0:video.volume);
       const mute=find('mute'),muteLabel=(video.muted?'Unmute ':'Mute ')+mediaName();mute.setAttribute('aria-label',muteLabel);mute.title=muteLabel;mute.setAttribute('aria-pressed',String(video.muted));
       const volumeButton=find('volume-menu').querySelector('summary');volumeButton.setAttribute('aria-label',video.muted||video.volume===0?'Volume, muted':'Volume, '+Math.round(video.volume*100)+' percent');volumeButton.querySelector('path').setAttribute('d',video.muted||video.volume===0?'M11 4 6 8H3v8h3l5 4V4Zm5 5 6 6m0-6-6 6':'M11 4 6 8H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14');
@@ -332,10 +334,20 @@
       find('status-label').textContent='PLAYBACK UNAVAILABLE · '+code.replaceAll('_',' ').toUpperCase();
       dispatch('source-failure',{code,mediaType,hasPlayableSource:Boolean(source)});
     }
-    function mediaFailure(message) {
+    function mediaFailure(message,decodeFailure=false) {
       if(destroyed||suspended)return;
       const canonical=sourceData&&chooseSource(sourceData);
-      if(canonical&&source!==canonical){
+      const attemptedFallback=roomDecodeFallback?.snapshot===sourceSnapshotKey;
+      if(canonical&&remoteMode.enabled&&remoteMode.allowLocalRetry&&decodeFailure&&source===canonical&&!attemptedFallback&&!sourceData.isLiveM3u8){
+        const alternate=sourceOptions.find(item=>item.playbackUrl!==canonical&&!item.isLiveM3u8);
+        if(alternate){
+          roomDecodeFallback={snapshot:sourceSnapshotKey,url:alternate.playbackUrl};
+          const position=Math.max(resumeAt,number(video.currentTime,0)),shouldPlay=pendingPlay||!video.paused;
+          attachSource(alternate.playbackUrl,dataForSource(alternate),{position,shouldPlay});
+          return;
+        }
+      }
+      if(canonical&&source!==canonical&&!(attemptedFallback&&source===roomDecodeFallback.url)){
         // Quality and audio are personal choices, including for party guests.
         // Recover locally; a guest must not need authority to restart discovery.
         failedPreferenceMedia=mediaKey(sourceData);
@@ -681,7 +693,8 @@
         if(code===2&&playable&&sourceData&&!current.paused){
           recoverStall('The '+mediaName()+' connection was interrupted.');return;
         }
-        mediaFailure(code===3||code===4?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');
+        const decodeFailure=code===3||code===4;
+        mediaFailure(decodeFailure?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.',decodeFailure);
       }),mediaListeners);
       observeTrackLists(token);
     }
@@ -717,6 +730,7 @@
     }
     async function attachSource(next,data,{position=0,shouldPlay=false}={}) {
       app.dataset.playerArtworkPending='true';
+      delete app.dataset.playerFailureCode;
       cancelResolver();teardownMedia({replace:true});source=next;activeSourceData=data;
       resumeAt=Math.max(0,number(position,0));lastTime=0;lastBuffer=0;hlsRecovery={network:0,media:0};
       pendingPlay=shouldPlay;
@@ -742,7 +756,8 @@
             if(!error.fatal)return;
             if(error.type===Hls.ErrorTypes.MEDIA_ERROR&&hlsRecovery.media++===0){setStatus('buffering');instance.recoverMediaError();watchProgress();return;}
             if(error.type===Hls.ErrorTypes.NETWORK_ERROR&&hlsRecovery.network++===0){setStatus('buffering');instance.startLoad();watchProgress();return;}
-            mediaFailure(error.type===Hls.ErrorTypes.MEDIA_ERROR?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.');
+            const decodeFailure=error.type===Hls.ErrorTypes.MEDIA_ERROR;
+            mediaFailure(decodeFailure?'This browser could not play the '+mediaName()+'’s format. Try another browser, or retry playback.':'The '+mediaName()+' connection was interrupted. Check your connection, then try again.',decodeFailure);
           });
           instance.loadSource(next);instance.attachMedia(video);
         }else if(kind==='dash'){
@@ -754,7 +769,7 @@
         }else {video.src=next;video.load();}
         return true;
       } catch(error) {
-        if(alive(token))mediaFailure(error.message==='unsupported'?'This browser does not support this '+mediaName()+' format. Try another browser.':'Playback could not load. Check your connection or browser blockers, then try again.');return false;
+        if(alive(token))mediaFailure(error.message==='unsupported'?'This browser does not support this '+mediaName()+' format. Try another browser.':'Playback could not load. Check your connection or browser blockers, then try again.',error.message==='unsupported');return false;
       }
     }
     function requestJson(url,timeout) {
@@ -774,7 +789,7 @@
     async function resolve({retry=false}={}) {
       if(destroyed)return false;
       if(suspended)return retry?revalidateSuspended():false;
-      if(managed||remoteMode.enabled){if(retry&&!locked())dispatch('retry',{mediaId,type:mediaType});return false;}
+      if(managed||remoteMode.enabled){if(retry&&canRetry())dispatch('retry',{mediaId,type:mediaType});return false;}
       app.dataset.playerArtworkPending='true';
       cancelResolver();teardownMedia({replace:true});source='';sourceData=null;resetSourceOptions();loadingKey='';delete app.dataset.playerFailureCode;setStatus('loading');
       const token=resolverGeneration;lookupDeadline=Date.now()+config.resolve;let first=true,transportFailures=0,busyCount=0,providerRetries=0;
@@ -847,11 +862,11 @@
       const bounds=range();if(!bounds)return false;const time=Math.max(bounds.start,Math.min(bounds.end,Number(seconds)));
       const before=number(video.currentTime,0);try {video.currentTime=time;}catch{return false;}lastTime=time;updateTime();if(!video.paused)watchProgress({renew:Math.abs(time-before)>.1});if(!remote)dispatch('action',{action:'set',time});emitState();return true;
     }
-    function setRemoteMode({enabled=false,isHost=false,manual=false}={}) {
+    function setRemoteMode({enabled=false,isHost=false,manual=false,allowLocalRetry=false}={}) {
       // A party owns this page after joining, including in-place episode changes
       // and leaving the room. A new solo page owns personal progress again.
       if(enabled||manual){savePlayback(true);soloTracking=false;if(personalResume>0)resumeAt=0;personalResume=0;}
-      if(destroyed)return;const entered=enabled&&!remoteMode.enabled;remoteMode={enabled:!!enabled,isHost:!!isHost,manual:!!manual};managed=!!enabled||!!manual;app.dataset.playerManaged=String(managed);
+      if(destroyed)return;const entered=enabled&&!remoteMode.enabled;remoteMode={enabled:!!enabled,isHost:!!isHost,manual:!!manual,allowLocalRetry:!!allowLocalRetry};managed=!!enabled||!!manual;app.dataset.playerManaged=String(managed);
       if(entered){cancelResolver();if(!source){stopWatchdog();setStatus('waiting');}}
       if(enabled){video.playbackRate=1;find('speed').value='1';}if(locked())scrubbing=false;updateControls();emitState();
     }
@@ -891,7 +906,7 @@
     listen(find('seek'),'change',event=>{const value=Number(event.target.value);scrubbing=false;seek(value);updateTime();updateVisibility({reveal:true});});
     listen(find('seek'),'pointercancel',()=>{scrubbing=false;updateTime();updateVisibility({reveal:true});});
     listen(find('seek'),'blur',()=>{if(!scrubbing)return;scrubbing=false;seek(Number(find('seek').value));updateTime();updateVisibility({reveal:true});});
-    listen(find('retry'),'click',()=>{if(!locked())resolve({retry:true});});
+    listen(find('retry'),'click',()=>{if(canRetry())resolve({retry:true});});
     listen(find('settings-close'),'click',()=>{closeMenu(find('settings'));find('settings').querySelector('summary').focus();});
     listen(find('servers-close'),'click',()=>{closeMenu(find('servers'));find('servers').querySelector('summary').focus();});
     listen(find('servers'),'toggle',()=>{if(find('servers')?.open)loadProviders();});
