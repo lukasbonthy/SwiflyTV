@@ -58,6 +58,17 @@ test('Joining pauses solo playback and moves player into remote mode',async()=>{
  ack(env,false);
  assert(env.calls.some(x=>x[0]==='remote'&&x[1].enabled&&!x[1].isHost));
 });
+test('A viewer who inherits a room before playback starts can start its selected title',async()=>{
+ const env=setup();
+ await join(env);
+ ack(env,false);
+ assert.equal(env.sent.filter(event=>event.name==='watchroom:movie-select').length,0);
+ env.receive('watchroom:host',{roomId:env.room.id,isHost:true});
+ env.receive('watchroom:host',{roomId:env.room.id,isHost:true});
+ const selections=env.sent.filter(event=>event.name==='watchroom:movie-select');
+ assert.equal(selections.length,1);
+ assert.equal(selections[0].data.movieId,'101');
+});
 test('A join input rejects external invite URLs before contacting services',async()=>{
  const env=setup();let requested=0;env.w.fetch=async()=>{requested++;throw Error('bad');};
  env.w.document.querySelector('[data-player-party-open]').click();

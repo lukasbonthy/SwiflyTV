@@ -99,6 +99,7 @@
  }
  function applyMovie(movie) {
   if(!joined||!movie)return;const selected=selection(movie);if(!selected)return;if(selected.movieId!==movieId||selected.type!==pageType){navigateRoom({...room,syncedMovie:movie});return;}
+  if(movie.status!=='idle')pendingSelect=false;
   currentMedia=selected;currentSnapshot=movie;room.syncedMovie=movie;updateEpisode();
   if(movie.status==='ready'){
    readyMovie=movie;
@@ -126,6 +127,11 @@
   waitForJoin();
   socket.emit('watchroom:join',{roomId,user:username,existingOnly:true});
  }
+ function startSelectedMedia() {
+  if(!pendingSelect||!isHost)return;
+  pendingSelect=false;
+  socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),name:username});
+ }
  function ensureSocket() {
   if(socket)return socket;if(typeof window.io!=='function')throw Error('Party connection is unavailable. Reload and try again.');
   socket=window.io();online=Boolean(socket.connected);
@@ -143,7 +149,7 @@
   socket.on('watchroom:joined',data=>{
    if(disposed||suspended||data?.room?.id!==roomId||!roomId)return;serverClock(data);clearTimeout(ackTimer);room=data.room;joined=true;online=true;isHost=Boolean(data.isHost);call?.setRoom(roomId);update();setUrl(true);if(dialog?.open)dialog.close();busy(false);setupStatus('');
    (data.messages||[]).forEach(addMessage);applyMovie(room.syncedMovie);resetClock();
-   if(pendingSelect&&isHost){pendingSelect=false;socket.emit('watchroom:movie-select',{roomId,...selectIdentity(),name:username});}
+   startSelectedMedia();
   });
   socket.on('watchroom:movie-sync',data=>{if(!disposed&&!suspended&&data?.roomId===roomId&&joined){serverClock(data);applyMovie(data.movie);}});
   socket.on('watchroom:movie-sync-state',data=>{if(disposed||suspended||!joined||data?.roomId!==roomId||data.movieId&&String(data.movieId)!==movieId)return;if(pageType==='tv'&&(mediaKey(data)!==mediaKey(currentMedia)||data.requestId!==currentSnapshot?.requestId))return;if(data.requestId&&currentSnapshot?.requestId&&data.requestId!==currentSnapshot.requestId)return;serverClock(data);sync=data.sync;applySync();});
@@ -152,13 +158,13 @@
    if(disposed||suspended||!joined||data?.roomId!==roomId)return;const list=$('[data-party-members]',panel),members=Array.isArray(data.members)?data.members:[];list.replaceChildren();
    members.slice(0,60).forEach(member=>{const item=document.createElement('li');item.textContent=String(member.name||'Guest').slice(0,40)+(member.isHost?' · Host':'');list.append(item);});$('[data-party-member-count]',panel).textContent=members.length+' '+(members.length===1?'person':'people')+' here';
   });
-  socket.on('watchroom:host',data=>{if(!disposed&&!suspended&&joined&&data?.roomId===roomId){isHost=Boolean(data.isHost);update();}});
+  socket.on('watchroom:host',data=>{if(!disposed&&!suspended&&joined&&data?.roomId===roomId){isHost=Boolean(data.isHost);update();startSelectedMedia();}});
   return socket;
  }
  function attach(next,created=false) {
   if(!next||!validRoom(next.id))throw Error('This invite is unavailable. Check the room code.');
   const film=selection(next.syncedMovie);if(browse||film&&(film.movieId!==movieId||film.type!==pageType)||!film&&!created){navigateRoom(next);return;}
-  ensureSocket();if(roomId!==next.id)call?.setRoom('');if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created||next.syncedMovie?.socialInvite===true;sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
+  ensureSocket();if(roomId!==next.id)call?.setRoom('');if(roomId&&roomId!==next.id)socket.emit('watchroom:leave');if(roomId!==next.id)clearConversation();roomId=next.id;room=next;pendingSelect=created||next.syncedMovie?.socialInvite===true||Boolean(film&&next.syncedMovie.status==='idle');sourceKey='';readyMovie=null;currentSnapshot=null;sync=null;joined=false;isHost=false;player()?.pause({remote:true});update();player()?.loadSource({status:'loading',message:'Joining your watch party…'});
   if(socket.connected)emitJoin();else{waitForJoin();socket.connect?.();}
  }
  async function join(value) {
