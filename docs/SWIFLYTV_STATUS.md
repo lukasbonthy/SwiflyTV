@@ -2,9 +2,15 @@
 
 Updated: November 26, 2026 (Eastern).
 
+## Watch-party playback recovery
+
+- [PR #178](https://github.com/lukasbonthy/SwiflyTV/pull/178) shipped application commit `09b2e4c1c90c0900380c3e2e8b094812422c70a5`, with tested tree `ceb5c663c66b36ae70f104c979dd5da621ea6b0d`. Render deployment `dep-dc4gp00jo6nc73bl37i0` went live November 26 at 11:53 p.m. Eastern (`2026-11-27T04:53:12.948271Z`). The production access page and Socket.IO transport both returned HTTP 200 after deployment.
+- A party keeps the host's selected playback server, recovers from temporary discovery failures, and lets each guest recover playback locally. A host retry keeps the room's playback position and paused state. A decoder failure can try one alternate already supplied with the same room source.
+- The exact tree passed the build and 281 focused checks. Two independently authorized Chromium sessions decoded fixture video and verified selected-server reuse, automatic transient recovery, guest-only retry, and both viewers at precisely 12 seconds paused after a host retry. The specific title reported by the user was unavailable for production testing. This documentation checkpoint is separate from the running application.
+
 ## Watch-party guest admission
 
-- [PR #177](https://github.com/lukasbonthy/SwiflyTV/pull/177) merged application commit `8f04f5c1c310814335c3c07f1c444cb9ddc38674`. Its tree `628ed846163693cf8b34c22c5d4be3e0df93d561` matches the tested PR. The Render deployment and live guest admission are awaiting confirmation.
+- [PR #177](https://github.com/lukasbonthy/SwiflyTV/pull/177) shipped application commit `8f04f5c1c310814335c3c07f1c444cb9ddc38674`. Its tree `628ed846163693cf8b34c22c5d4be3e0df93d561` matches the tested PR. Render deployment `dep-dc4gfcu0tbcc73d32t5g` went live November 26 at 11:33 p.m. Eastern.
 - Movie and episode invites resolve the room's current selection, including during catalog metadata outages. Party Hub keeps invite lookup and connection errors visible. Current clients join existing rooms, preserve the host, and give expired invites a clear recovery message. The site PIN still preserves the invite after entry.
 - The final tree passed 100 focused tests and [hosted playback QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/45940119533). Local Chromium with real HTTP and Socket.IO verified an independently authorized guest, expired-invite feedback, a catalog outage, and host handoff before playback. The browser fixture omitted unrelated presentation assets and gamepad monitoring due to executor crashes.
 
