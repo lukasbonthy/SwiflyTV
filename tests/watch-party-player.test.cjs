@@ -115,7 +115,7 @@ test('Guest playback actions cannot emit host controls or source retry',async()=
  assert.equal(env.sent.filter(x=>['watchroom:movie-control','watchroom:movie-select'].includes(x.name)).length,0);
 });
 test('Host actions and Retry use the active room and current movie',async()=>{
- const env=setup();await join(env);ack(env,true);const app=env.w.document.querySelector('.svPlayerPage');
+ const env=setup();await join(env);ack(env,true);env.sent.length=0;const app=env.w.document.querySelector('.svPlayerPage');
  app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:action',{bubbles:true,detail:{action:'set',time:32}}));
  app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:retry',{bubbles:true,detail:{mediaId:'101'}}));
  assert.deepEqual(JSON.parse(JSON.stringify(env.sent.find(x=>x.name==='watchroom:movie-control').data)),{roomId:'room-one',action:'set',time:32,clientTime:32,intent:'user'});
