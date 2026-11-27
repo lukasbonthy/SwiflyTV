@@ -9,7 +9,7 @@
   for(const panel of panels)panel.hidden=panel.dataset.partyEntryPanel!==mode;
   for(const button of buttons){const active=button.dataset.partyEntry===mode;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;if(active&&focus)button.focus();}
  }
- tabs.dataset.ready='true';tabs.hidden=false;show('create');
+ tabs.dataset.ready='true';tabs.hidden=false;show(app.dataset.roomId?'join':'create');
  tabs.addEventListener('click',event=>{const button=event.target.closest('[data-party-entry]');if(button&&!button.disabled)show(button.dataset.partyEntry);});
  tabs.addEventListener('keydown',event=>{
   const index=buttons.indexOf(event.target);if(index<0||event.altKey||event.ctrlKey||event.metaKey)return;

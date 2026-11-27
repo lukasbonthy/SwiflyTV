@@ -42,7 +42,7 @@ test('The normal watch route renders one native movie player with shared assets 
  assert.equal(d.querySelectorAll('.svPlayerPage [data-player-video]').length,1);
  const preview=d.querySelector('[data-call-local] video');assert(preview?.hasAttribute('muted'));assert(preview?.closest('[hidden]'),'The optional camera preview starts hidden');
  assert.equal(d.querySelector('.svPlayerPage').dataset.playerId,'101');assert.equal(d.querySelector('h1').textContent.trim(),'Arrival');
- assert(d.querySelector('script[src="/assets/player/player.js?v=274"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));
+ assert(d.querySelector('script[src="/assets/player/player.js?v=274"]'));assert(d.querySelector('script[src="/assets/player/watch-party.js?v=3"]'));
  assert(d.querySelector('link[href="/assets/player/player.css?v=272"]'));assert(d.querySelector('dialog.svWatchPartyDialog'));
  assert.equal(d.querySelector('.dsProxyVideoWaitingShell'),null);assert.equal(d.querySelector('.svPartyHub'),null);
  assert.equal(d.querySelector('[data-sv-player-back]').getAttribute('href'),'/movie/101');
@@ -160,7 +160,7 @@ test('Social navigation opens the integrated Party Hub while movie catalog party
  const env=parse(await(await fetch(base+'/movies?party=1')).text()),d=env.window.document;
  assert.equal(d.querySelector('.dsBrowseTop h1').textContent.trim(),'Movies');assert(d.querySelector('.dsBrowseTop .genreDropdown'));assert(d.querySelector('.dsHero'));
  assert(d.querySelector('[data-party-browse]'));assert(d.querySelector('.dsContent'));assert.equal(d.querySelector('.svPartyHub'),null);
- assert(d.querySelector('script[src="/assets/player/watch-party.js?v=2"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
+ assert(d.querySelector('script[src="/assets/player/watch-party.js?v=3"]'));assert.equal(d.querySelector('script[src*="player/player.js"]'),null);
 });
 test('Old movie party setup links redirect to the regular movie player',async()=>{
  const response=await fetch(base+'/social?tab=watchrooms&movieId=101',{redirect:'manual'});assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/watch/movie/101?mode=movie&party=create');

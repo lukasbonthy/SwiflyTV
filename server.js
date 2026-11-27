@@ -6716,8 +6716,8 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${player ? '<script defer src="/assets/player/waves.js?v=6"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=208"></script><script defer src="/assets/party/lobby.js?v=199"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=2"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=209"></script><script defer src="/assets/party/lobby.js?v=200"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=3"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=272" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=263" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
@@ -8975,23 +8975,30 @@ async function watchPage(req, res, type, options = {}) {
   const id = partyMovieId(req.params.id);
   if (!id) return res.status(404).send(pageShell({title: `${SITE_NAME} — Title unavailable`, body: '<main class="dsPlainPage"><h1>Title unavailable</h1><a class="dsSecondaryBtn" href="/movies">Browse movies</a></main>'}));
   const mode = !kidsMode && req.query.mode === "trailer" ? "trailer" : "movie";
+  const roomId = !kidsMode && mode === "movie" && typeof req.query.roomId === "string" && /^[a-z0-9][a-z0-9-]{0,31}$/.test(req.query.roomId) ? req.query.roomId : "";
+  const room = watchRooms.get(roomId);
+  const roomMedia = room && partyMediaSelection(room.syncedMovie);
+  if (roomId) res.set("Cache-Control", "no-store");
+  if (roomMedia && (roomMedia.type !== type || roomMedia.movieId !== id)) {
+    return res.redirect(partyMediaWatchUrl(roomMedia, roomId));
+  }
   const endpoint = type === "tv" ? `/tv/${id}` : `/movie/${id}`;
+  const metadataDeadline = roomMedia ? AbortSignal.timeout(3000) : undefined;
   const [details, videos] = kidsMode ? [selection.details,{results:[]}] : await Promise.all([
-    tmdb(endpoint, {}, CACHE_TTL.long),
-    tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long),
+    tmdb(endpoint, {}, CACHE_TTL.long, metadataDeadline),
+    tmdb(`${endpoint}/videos`, {}, CACHE_TTL.long, metadataDeadline),
   ]);
-  if (details.__error) return res.send(setupNeededPage(details.message));
-  const title = getTitle(details);
+  if (details.__error && !roomMedia) return res.send(setupNeededPage(details.message));
+  const title = details.__error ? room.name : getTitle(details);
   const trailer = pickBestTrailer(videos.results || []);
-  const roomId = !kidsMode && typeof req.query.roomId === "string" && /^[a-z0-9][a-z0-9-]{0,31}$/.test(req.query.roomId) ? req.query.roomId : "";
   const seasons = (details.seasons || []).filter(season => Number.isSafeInteger(season.season_number) && season.season_number > 0);
   const requestedSeason=partyMovieId(req.query.s||req.query.season);
-  const season = (!kidsMode||seasons.some(row=>String(row.season_number)===requestedSeason))&&requestedSeason || String(seasons[0]?.season_number || 1);
-  const episode = partyMovieId(req.query.e || req.query.episode) || "1";
+  const season = roomMedia?.season || ((!kidsMode||seasons.some(row=>String(row.season_number)===requestedSeason))&&requestedSeason) || String(seasons[0]?.season_number || 1);
+  const episode = roomMedia?.episode || partyMovieId(req.query.e || req.query.episode) || "1";
   const currentSeason = seasons.find(item => String(item.season_number) === season);
   const provider = !kidsMode && typeof req.query.provider === "string" ? req.query.provider : "";
   const seasonDetails = type === "tv" && mode === "movie"
-    ? await tmdb(`${endpoint}/season/${season}`, {}, CACHE_TTL.long).catch(() => ({ episodes: [] })) : { episodes: [] };
+    ? await tmdb(`${endpoint}/season/${season}`, {}, CACHE_TTL.long, metadataDeadline).catch(() => ({ episodes: [] })) : { episodes: [] };
   const episodes = (Array.isArray(seasonDetails.episodes) ? seasonDetails.episodes : []).map(item => ({ ...item, still: /^\/[A-Za-z0-9_.-]+$/.test(item.still_path||'') ? img(item.still_path, "w342") : "" }));
   const episodeTitle = episodes.find(item => String(item.episode_number) === episode)?.name || "";
   const episodeOptions = {
@@ -15113,6 +15120,7 @@ app.get("/social", (req, res) => {
   const roomId = normalizeRoomId(req.query.roomId || req.query.room || "");
   const room = roomId ? watchRooms.get(roomId) : null;
   const roomWatchUrl = room && partyMediaWatchUrl(room.syncedMovie, roomId);
+  if (roomId) res.set("Cache-Control", "no-store");
   if (roomWatchUrl) return res.redirect(roomWatchUrl);
   // The navigation's Social link should enter the real, integrated Party Hub,
   // not unexpectedly jump into the catalog's embedded party section.
@@ -15345,6 +15353,8 @@ app.post("/api/social/watchrooms/create", async (req, res) => {
     videoId: youtubeMatch ? youtubeMatch[1] : "",
     embedUrl: youtubeMatch ? "" : mediaUrl,
   });
+  const selection = !mediaUrl && partyMediaSelection(req.body || {});
+  if (selection) room.syncedMovie = { ...room.syncedMovie, ...selection };
 
   res.json({ ok: true, room: publicRoom(room), socialUrl: `/social?tab=watchrooms&roomId=${encodeURIComponent(room.id)}&name=${encodeURIComponent(room.name)}` });
 });
@@ -15543,7 +15553,7 @@ app.get("/api/date-room/:roomId/state", (req, res) => {
   const room = watchRooms.get(roomId);
 
   if (!room) {
-    return res.status(404).json({ ok: false, error: "room_not_found" });
+    return res.status(404).json({ ok: false, error: "room_not_found", message: "This watch party could not be found. Ask the host for a fresh invite." });
   }
 
   if (clientId) {
@@ -15786,9 +15796,13 @@ io.on("connection", (socket) => {
   socket.on("watchroom:join", (payload = {}) => {
     const roomId = normalizeRoomId(payload.roomId);
     if (!roomId) return;
+    const existingRoom = watchRooms.get(roomId);
+    if (!existingRoom && payload.existingOnly === true) {
+      socket.emit("watchroom:join-error", { roomId, error: "room_not_found" });
+      return;
+    }
     if (socket.data.roomId && socket.data.roomId !== roomId) leaveWatchRoom(socket);
-
-    const room = getOrCreateWatchRoom(roomId, {
+    const room = existingRoom || getOrCreateWatchRoom(roomId, {
       name: payload.name,
       videoId: payload.videoId,
       embedUrl: payload.embedUrl,
@@ -15801,7 +15815,10 @@ io.on("connection", (socket) => {
     socket.data.watchroomName = String(payload.user || "Guest").slice(0, 40);
     socket.join(room.id);
 
-    if (!room.hostSocketId) room.hostSocketId = socket.id;
+    if (!room.hostSocketId) {
+      room.hostSocketId = socket.id;
+      room.host = socket.data.watchroomName;
+    }
     const isHost = room.hostSocketId === socket.id;
     socket.data.isWatchroomHost = isHost;
 

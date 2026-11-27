@@ -13,7 +13,7 @@ function setup(path='/watch/movie/101?mode=movie', room={id:'room-one',name:'Fri
  w.fetch=async url=>({ok:true,json:async()=>String(url).includes('/create')?{ok:true,room}:{ok:true,room}});
  const receive=(name,data)=>handlers[name]?.(data);
  env.window.boot('player/watch-party.js');
- return {...env,w,handlers,sent,calls,room,receive};
+ return {...env,w,socket,handlers,sent,calls,room,receive};
 }
 async function join(env){env.w.document.querySelector('[data-player-party-open]').click();const form=env.w.document.querySelector('[data-party-join-form]');form.querySelector('input').value=env.room.id;form.dispatchEvent(new env.w.Event('submit',{bubbles:true,cancelable:true}));await tick();}
 function ack(env,isHost=false){env.receive('watchroom:joined',{room:env.room,isHost,messages:[]});}
@@ -58,6 +58,17 @@ test('Joining pauses solo playback and moves player into remote mode',async()=>{
  ack(env,false);
  assert(env.calls.some(x=>x[0]==='remote'&&x[1].enabled&&!x[1].isHost));
 });
+test('A viewer who inherits a room before playback starts can start its selected title',async()=>{
+ const env=setup();
+ await join(env);
+ ack(env,false);
+ assert.equal(env.sent.filter(event=>event.name==='watchroom:movie-select').length,0);
+ env.receive('watchroom:host',{roomId:env.room.id,isHost:true});
+ env.receive('watchroom:host',{roomId:env.room.id,isHost:true});
+ const selections=env.sent.filter(event=>event.name==='watchroom:movie-select');
+ assert.equal(selections.length,1);
+ assert.equal(selections[0].data.movieId,'101');
+});
 test('A join input rejects external invite URLs before contacting services',async()=>{
  const env=setup();let requested=0;env.w.fetch=async()=>{requested++;throw Error('bad');};
  env.w.document.querySelector('[data-player-party-open]').click();
@@ -68,6 +79,34 @@ test('A join input preserves valid same-origin player invites',async()=>{
  const env=setup();const form=env.w.document.querySelector('[data-party-join-form]');form.querySelector('input').value='http://localhost:3000/watch/movie/101?roomId=room-one';form.dispatchEvent(new env.w.Event('submit',{bubbles:true,cancelable:true}));await tick();
  assert.equal(env.sent[0].data.roomId,'room-one');
 });
+test('A copied join link opens the existing room named in its query',async()=>{
+ const env=setup();
+ const form=env.w.document.querySelector('[data-party-join-form]');
+ form.querySelector('input').value='http://localhost:3000/watchrooms/join?code=ROOM-ONE';
+ form.dispatchEvent(new env.w.Event('submit',{bubbles:true,cancelable:true}));
+ await tick();
+ assert.equal(env.sent[0].data.roomId,'room-one');
+ assert.equal(env.sent[0].data.existingOnly,true);
+});
+test('A declined connection explains the access requirement while the party is joining',async()=>{
+ const env=setup();
+ env.socket.connect=()=>{};
+ env.socket.connected=false;
+ await join(env);
+ assert.equal(env.sent.length,0);
+ env.receive('connect_error',new Error('Access code required.'));
+ assert.match(env.w.document.querySelector('[data-party-setup-status]').textContent,/site access code/);
+ assert.equal(env.w.document.querySelector('[data-party-connection]').textContent,'Connection unavailable');
+});
+test('A room that expires after lookup asks for a fresh invite',async()=>{
+ const env=setup();
+ await join(env);
+ env.receive('watchroom:join-error',{roomId:'unrelated-room',error:'room_not_found'});
+ assert.doesNotMatch(env.w.document.querySelector('[data-party-status]').textContent,/fresh invite/);
+ env.receive('watchroom:join-error',{roomId:env.room.id,error:'room_not_found'});
+ assert.match(env.w.document.querySelector('[data-party-setup-status]').textContent,/fresh invite/);
+ assert.match(env.calls.findLast(row=>row[0]==='source')[1].message,/fresh invite/);
+});
 test('Guest playback actions cannot emit host controls or source retry',async()=>{
  const env=setup();await join(env);ack(env,false);
  const app=env.w.document.querySelector('.svPlayerPage');
@@ -76,7 +115,7 @@ test('Guest playback actions cannot emit host controls or source retry',async()=
  assert.equal(env.sent.filter(x=>['watchroom:movie-control','watchroom:movie-select'].includes(x.name)).length,0);
 });
 test('Host actions and Retry use the active room and current movie',async()=>{
- const env=setup();await join(env);ack(env,true);const app=env.w.document.querySelector('.svPlayerPage');
+ const env=setup();await join(env);ack(env,true);env.sent.length=0;const app=env.w.document.querySelector('.svPlayerPage');
  app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:action',{bubbles:true,detail:{action:'set',time:32}}));
  app.dispatchEvent(new env.w.CustomEvent('swiflyplayer:retry',{bubbles:true,detail:{mediaId:'101'}}));
  assert.deepEqual(JSON.parse(JSON.stringify(env.sent.find(x=>x.name==='watchroom:movie-control').data)),{roomId:'room-one',action:'set',time:32,clientTime:32,intent:'user'});
