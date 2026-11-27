@@ -111,6 +111,7 @@ const path = require("path");
 const dns = require("dns").promises;
 const net = require("net");
 const crypto = require("crypto");
+const { setTimeout: delay } = require("node:timers/promises");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -5765,7 +5766,7 @@ app.get('/api/movie-nights/:id/player',async(req,res)=>{
 app.get(['/movie-nights','/movie-night/:id'],async(req,res)=>{
   res.set('Cache-Control','private, no-store');res.vary('Cookie');
   let state;try{state=await movieNights.snapshot(req,req.params.id);if(state.code)res.status(503);}catch(error){res.status(error.status||503);state={event:null,upcoming:[],code:error.code,message:error.message};}
-  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event),accountNotice:temporaryAccountNotice}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=6"><link rel="stylesheet" href="/assets/community/movie-nights-auth.css?v=2"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/community/movie-nights.js?v=5"></script><script defer src="/assets/community/movie-nights-auth.js?v=2"></script>'}));
+  res.send(pageShell({title:SITE_NAME+' — Movie Nights',active:'movie-nights',description:'Vote for the community feature, then join one synchronized screening with live chat.',body:movieNightsMarkup({snapshot:state,playerHtml:movieNightPlayer(state.event),accountNotice:temporaryAccountNotice}),extraHead:'<link rel="stylesheet" href="/assets/player/player.css?v=272"><link rel="stylesheet" href="/assets/community/movie-nights.css?v=6"><link rel="stylesheet" href="/assets/community/movie-nights-auth.css?v=2"><script defer src="/socket.io/socket.io.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=275"></script><script defer src="/assets/community/movie-nights.js?v=5"></script><script defer src="/assets/community/movie-nights-auth.js?v=2"></script>'}));
 });
 app.use('/api/feed',createFeed({tmdb:(...args)=>tmdb(...args)}).router);
 app.use('/api/library',createCatalogRouter({tmdb:(...args)=>tmdb(...args)}));
@@ -6152,7 +6153,7 @@ function currentSyncedMovieSeconds(movie = {}) {
   const sync = movie.sync || {};
   const offset = Math.max(0, Number(sync.offset || 0));
   if (!sync.playing || !sync.startedAt) return offset;
-  return Math.max(0, offset + (Date.now() - Number(sync.startedAt || Date.now())) / 1000);
+  return offset + Math.max(0, (Date.now() - Number(sync.startedAt)) / 1000);
 }
 
 function ensureSyncedMovieSync(movie = {}) {
@@ -6626,7 +6627,7 @@ function kidsPageShell({title,description,body,active,extraHead,player,status}){
     <link rel="icon" type="image/png" href="/assets/brand/swiflytv-favicon.png?v=181"><link rel="preconnect" href="https://image.tmdb.org"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
     ${tvHead()}${studioHead()}${loadingHead({artwork:true,bundled:true})}${navigationHead()}<link rel="stylesheet" href="/assets/clean/base.css?v=262"><link rel="stylesheet" href="/assets/clean/navigation.css?v=2">${shellStyleLink('core')}${shellStyleLink(player?'player':'catalog')}${player?'<link rel="stylesheet" href="/assets/player/player.css?v=272">':''}${shellStyleLink('finish')}
     <script defer src="/assets/liquid-glass/liquid-glass.js?v=277"></script><script defer src="/assets/clean/catalog.js?v=2"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/liquid-glass/surfaces.js?v=282"></script><script defer src="/assets/clean/hero-palette.js?v=260"></script><script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/kids/kids.js?v=3"></script>
-    ${player?'<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=274"></script><script defer src="/assets/player/waves.js?v=6"></script>':''}${extraHead||''}
+    ${player?'<script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js"></script><script defer src="/assets/player/player.js?v=275"></script><script defer src="/assets/player/waves.js?v=6"></script>':''}${extraHead||''}
     </head><body class="svCleanShell svKidsShell">${kidsAccessibilityPrime()}${loadingMarkup()}${navigation.header}<div class="svBrowseScene" data-sv-browse-scene>${body}<footer class="footer kidsNativeFooter"><div class="container"><strong>SwiflyTV Kids</strong><span>Movies: G & PG · Series: TV-Y, TV-Y7 & TV-G</span><a href="/kids/browse">Browse verified titles</a></div></footer></div>${navigation.mobile}${tvAssetScript()}</body></html>`;
 }
 
@@ -6712,12 +6713,12 @@ function pageShell({ title = SITE_NAME, description = "Stream movies, TV shows, 
     ${body.includes('data-library-page') ? '<script defer src="/assets/clean/library-page.js?v=2"></script>' : ''}
     <script defer src="/assets/kids/guard.js?v=2"></script><script defer src="/assets/clean/episode-browser.js?v=5"></script><script defer src="/assets/clean/feed.js?v=262"></script><script defer src="/assets/vendor/lenis/lenis.min.js?v=1.3.16-r1"></script><script defer src="/assets/clean/motion.js?v=253"></script><script defer src="/assets/clean/press.js?v=2"></script><script defer src="/assets/clean/scroll.js?v=261"></script><script defer src="/assets/clean/details.js?v=281"></script><script defer src="/assets/clean/download.js?v=3"></script><script defer src="/assets/liquid-glass/surfaces.js?v=282"></script><script defer src="/assets/studio/wallpapers.js?v=1"></script><script defer src="/assets/studio/studio.js?v=266"></script><script defer src="/assets/clean/aurora.js?v=267"></script>
     ${active === "welcome" ? '<link rel="stylesheet" href="/assets/clean/welcome.css?v=262" />' : ""}
-    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=274"></script>' : ""}
+    ${player || active === "social" ? '<script defer src="/assets/player/player.js?v=275"></script>' : ""}
     ${player ? '<script defer src="/assets/player/waves.js?v=6"></script>' : ""}
     ${player ? '<script defer src="/assets/player/audio-sample.js?v=1"></script><script defer src="/assets/player/assist.js?v=3"></script><link rel="stylesheet" href="/assets/player/assist.css?v=264" />' : ""}
     ${player || active === "social" ? '<script defer src="/assets/party/watchroom-call.js?v=1"></script>' : ""}
-    ${active === "social" ? '<script defer src="/assets/party/party.js?v=209"></script><script defer src="/assets/party/lobby.js?v=200"></script>' : ""}
-    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=3"></script>' : ""}
+    ${active === "social" ? '<script defer src="/assets/party/party.js?v=210"></script><script defer src="/assets/party/lobby.js?v=200"></script>' : ""}
+    ${player || partyBrowse ? '<script defer src="/assets/player/watch-party.js?v=4"></script>' : ""}
     ${shellStyleLink(player ? "player" : "catalog")}
     ${player || active === "social" ? '<link rel="stylesheet" href="/assets/player/player.css?v=272" />' : ""}
     ${active === "social" ? '<link rel="stylesheet" href="/assets/party/party.css?v=263" /><link rel="stylesheet" href="/assets/player/watchroom.css?v=262" />' : ""}
@@ -8660,6 +8661,14 @@ function listProviderStreams(data = {}) {
 async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1", provider = "", signal = null }) {
   signal?.throwIfAborted();
   const mediaType = type === "tv" ? "tv" : "movie";
+  const preferredServer = provider && serverSelection({type:mediaType,id,season,episode,provider}, NUVIO_ENABLED ? NUVIO_PROVIDER_ORDER : []);
+  if (preferredServer) {
+    const timeout = AbortSignal.timeout(NUVIO_BRIDGE_ORDER.includes(provider) ? 47000 : 11000);
+    const preferredSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+    const preferredSource = await verifiedServerPlayback(preferredServer, preferredSignal).catch(() => null);
+    signal?.throwIfAborted();
+    if (preferredSource?.status === "ok") return preferredSource;
+  }
 
   const apiResult = await fetchApiProviderSource({ type: mediaType, id, season, episode, provider, signal });
   signal?.throwIfAborted();
@@ -8836,8 +8845,9 @@ async function fetchProxyVideoSourceRaw({ type, id, season = "1", episode = "1",
 
 const configuredSourceDeadline = Number(process.env.MOVIE_SOURCE_DEADLINE_MS || 75000);
 const configuredSourceConcurrency = Number(process.env.MOVIE_SOURCE_MAX_CONCURRENT || 2);
+const sourceDiscoveryDeadlineMs = Number.isFinite(configuredSourceDeadline) ? Math.round(Math.max(10000, Math.min(75000, configuredSourceDeadline))) : 75000;
 let movieSourceJobs = createSourceJobs({
-  deadlineMs: Number.isFinite(configuredSourceDeadline) ? Math.round(Math.max(10000, Math.min(75000, configuredSourceDeadline))) : 75000,
+  deadlineMs: sourceDiscoveryDeadlineMs,
   maxConcurrentResolvers: Number.isFinite(configuredSourceConcurrency) ? Math.round(Math.max(1, Math.min(6, configuredSourceConcurrency))) : 2,
   successTtlMs: 10 * 60 * 1000,
   errorTtlMs: 2500,
@@ -8846,6 +8856,32 @@ let movieSourceJobs = createSourceJobs({
 });
 function fetchProxyVideoSource(params, options = {}) {
   return movieSourceJobs.resolve(params, { retry: params.retry === true || options.retry === true });
+}
+
+async function resolveWatchPartySource(params, { retry, isCurrent }) {
+  const deadline = Date.now() + sourceDiscoveryDeadlineMs;
+  let refresh = retry;
+  let retriedSource = false;
+  let busyRetries = 0;
+  while (isCurrent()) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    const result = await movieSourceJobs.wait(params, { retry: refresh, timeoutMs: Math.min(8000, remaining) });
+    if (!isCurrent()) break;
+    if (result.code === "busy" && busyRetries++ < 8) {
+      await delay(Math.min(result.retryAfterMs || 1500, Math.max(0, deadline - Date.now())));
+      continue;
+    }
+    refresh = false;
+    if (result.status === "loading") continue;
+    if (!retriedSource && ["no_source", "unavailable", "provider_blocked"].includes(result.code) && deadline - Date.now() > 7000) {
+      refresh = retriedSource = true;
+      await delay(300);
+      continue;
+    }
+    return result;
+  }
+  return { status: "error", code: "timeout", message: "Source discovery took too long. Please retry." };
 }
 
 async function fetchMoviePlaceholderSource({ type, id }) {
@@ -14473,6 +14509,20 @@ app.get("/api/player/find-4k/:type/:id", async (req, res) => {
   } finally {clearTimeout(timer);res.off("close",disconnected);}
 });
 
+async function verifiedServerPlayback({type,id,season,episode,provider}, signal) {
+  const bridgeSelection = NUVIO_BRIDGE_ORDER.includes(provider);
+  const imdbId = bridgeSelection ? await bridgeImdbId({tmdbId:id,mediaType:type,signal}) : "";
+  if (bridgeSelection && process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT === "imdb" && !imdbId)
+    return {status:"unavailable",code:"metadata_unavailable"};
+  const found = await resolveNuvioProvider({provider,tmdbId:id,imdbId,mediaType:type,season,episode,
+    timeoutMs:bridgeSelection?45000:10000,signal,
+    isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
+  if (!found.ok || !found.source?.mediaVerified) return {status:"unavailable"};
+  const ready = apiSourceToProxyResult({source:found.source,raw:{},provider:"nuvio-"+provider,
+    type,id,season,episode,playbackCandidates:found.sources,subtitles:found.subtitles});
+  return ready?.playbackUrl ? {...ready,type,server:provider} : {status:"unavailable"};
+}
+
 // Manual server changes do not replace the shared cached default source job.
 app.get("/api/player/server/:type/:id", async (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -14480,22 +14530,13 @@ app.get("/api/player/server/:type/:id", async (req, res) => {
   const season=String(req.query.season||req.query.s||"1"), episode=String(req.query.episode||req.query.e||"1");
   const selection=serverSelection({type,id,season,episode,provider},NUVIO_ENABLED?NUVIO_PROVIDER_ORDER:[]);
   if(!selection)return res.status(400).json({status:"error",code:"invalid_request"});
-  const bridgeSelection=NUVIO_BRIDGE_ORDER.includes(provider);
+  const bridgeSelection=NUVIO_BRIDGE_ORDER.includes(selection.provider);
   const scope=new AbortController(),timer=setTimeout(()=>scope.abort(),bridgeSelection?47000:11000);
   const disconnected=()=>{if(!res.writableEnded)scope.abort();};
   res.on("close",disconnected);
   try {
-    const imdbId=bridgeSelection?await bridgeImdbId({tmdbId:id,mediaType:type,signal:scope.signal}):"";
-    if(bridgeSelection&&process.env.SWIFLY_STREMIO_ADDON_ID_FORMAT==="imdb"&&!imdbId)
-      return res.status(404).json({status:"unavailable",code:"metadata_unavailable"});
-    const found=await resolveNuvioProvider({provider,tmdbId:id,imdbId,mediaType:type,season,episode,
-      timeoutMs:bridgeSelection?45000:10000,signal:scope.signal,
-      isNonMediaUrl:value=>apiLooksDefinitelyNonMediaUrl(value,{allowManifestEndpoint:true})});
-    if(!found.ok||!found.source?.mediaVerified)return res.status(404).json({status:"unavailable"});
-    const ready=apiSourceToProxyResult({source:found.source,raw:{},provider:"nuvio-"+provider,
-      type,id,season,episode,playbackCandidates:found.sources,subtitles:found.subtitles});
-    if(!ready?.playbackUrl)return res.status(404).json({status:"unavailable"});
-    return res.json({...ready,type,server:provider});
+    const result=await verifiedServerPlayback(selection,scope.signal);
+    return res.status(result.status==="ok"?200:404).json(result);
   } catch {
     if(!res.headersSent&&!res.writableEnded&&!res.destroyed)
       res.status(scope.signal.aborted?504:503).json({status:"unavailable",code:scope.signal.aborted?"timeout":"provider_failed"});
@@ -14955,6 +14996,11 @@ function partyMediaSelection(value = {}) {
   return season && episode ? { movieId, type, season, episode } : null;
 }
 
+function partyPlaybackProvider(value) {
+  const provider = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return /^[a-z0-9][a-z0-9_-]{0,63}$/.test(provider) ? provider : "";
+}
+
 function partyMediaIdentity(movie = {}) {
   const selection = partyMediaSelection(movie);
   return selection ? { ...selection, requestId: movie.requestId || "" } : {};
@@ -15354,7 +15400,10 @@ app.post("/api/social/watchrooms/create", async (req, res) => {
     embedUrl: youtubeMatch ? "" : mediaUrl,
   });
   const selection = !mediaUrl && partyMediaSelection(req.body || {});
-  if (selection) room.syncedMovie = { ...room.syncedMovie, ...selection };
+  if (selection) {
+    const provider = partyPlaybackProvider(req.body.provider);
+    room.syncedMovie = { ...room.syncedMovie, ...selection, ...(provider && { provider }) };
+  }
 
   res.json({ ok: true, room: publicRoom(room), socialUrl: `/social?tab=watchrooms&roomId=${encodeURIComponent(room.id)}&name=${encodeURIComponent(room.name)}` });
 });
@@ -15958,16 +16007,32 @@ io.on("connection", (socket) => {
 
     const selection = partyMediaSelection(payload);
     if (!selection) return;
-    if (payload.retry === true && payload.requestId !== undefined && !partyTransportMatches(room.syncedMovie, payload)) return;
+    const retry = payload.retry === true;
+    const previous = room.syncedMovie;
+    if (retry && payload.requestId !== undefined && !partyTransportMatches(previous, payload)) return;
     const { movieId, type, season, episode } = selection;
     const noun = type === "tv" ? "episode" : "film";
+    const previousMedia = partyMediaSelection(previous);
+    const sameTitle = previousMedia?.type === type && previousMedia.movieId === movieId;
+    const sameMedia = sameTitle && previousMedia.season === season && previousMedia.episode === episode;
+    const provider = partyPlaybackProvider(payload.provider) || (sameTitle ? previous.provider || "" : "");
+    let resume = null;
+    if (retry && sameMedia) {
+      if (previous.status === "ready" && previous.sync) {
+        resume = { offset: currentSyncedMovieSeconds(previous), playing: Boolean(previous.sync.playing) };
+      } else if (room.sourceRetryState?.requestId === previous.requestId) {
+        resume = room.sourceRetryState;
+      }
+    }
 
     const selectedBy = String(payload.name || room.host || "Host").slice(0, 40);
     const requestId = Math.random().toString(36).slice(2, 10);
+    room.sourceRetryState = resume && { ...resume, requestId };
 
     room.syncedMovie = {
       status: "loading",
       ...selection,
+      provider,
       proxyVideo: "",
       playAt: 0,
       selectedBy,
@@ -15986,71 +16051,75 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("watchroom:message", {
       roomId: room.id,
       name: "System",
-      text: `${selectedBy} selected ${type === "tv" ? `season ${season}, episode ${episode}` : "a film"}. Getting it ready…`,
+      text: retry ? `${selectedBy} is retrying playback.` :
+        `${selectedBy} selected ${type === "tv" ? `season ${season}, episode ${episode}` : "a film"}. Getting it ready…`,
       createdAt: Date.now(),
     });
 
-    const result = await fetchProxyVideoSource({ type, id: movieId, ...(type === "tv" ? { season, episode } : {}), retry: payload.retry === true });
+    const isCurrent = () => watchRooms.get(roomId) === room && room.syncedMovie?.requestId === requestId;
+    const result = await resolveWatchPartySource({ type, id: movieId, season, episode, provider }, { retry, isCurrent });
 
-    const latest = watchRooms.get(roomId);
-    if (!latest || !latest.syncedMovie || latest.syncedMovie.requestId !== requestId) return;
+    if (!isCurrent()) return;
 
     const playbackUrl = result.playbackUrl || result.hlsProxyUrl || result.embeddedM3u8Url || result.proxyVideo || result.m3u8;
     if (result.status === "ok" && playbackUrl) {
-      latest.syncedMovie = {
+      const playing = resume?.playing ?? true;
+      const playAt = playing ? Date.now() + 7000 : 0;
+      room.sourceRetryState = null;
+      room.syncedMovie = {
         ...result,
         status: "ready",
         ...selection,
+        provider,
         playbackUrl,
         proxyVideo: playbackUrl,
         providerUrl: result.providerUrl || "",
         sourceUrl: result.sourceUrl || "",
-      m3u8: result.m3u8 || "",
-      streamType: result.streamType || "",
-      streamQuality: result.streamQuality || "",
-      streamName: result.streamName || "",
-      streamMode: result.streamMode || "",
-      isLiveM3u8: Boolean(result.isLiveM3u8),
-      originalPlaybackUrl: result.originalPlaybackUrl || "",
-      hlsProxyUrl: result.hlsProxyUrl || "",
-      hlsProxyId: result.hlsProxyId || "",
-      apiProxyUrl: result.apiProxyUrl || "",
-        playAt: Date.now() + 7000,
+        m3u8: result.m3u8 || "",
+        streamType: result.streamType || "",
+        streamQuality: result.streamQuality || "",
+        streamName: result.streamName || "",
+        streamMode: result.streamMode || "",
+        isLiveM3u8: Boolean(result.isLiveM3u8),
+        originalPlaybackUrl: result.originalPlaybackUrl || "",
+        hlsProxyUrl: result.hlsProxyUrl || "",
+        hlsProxyId: result.hlsProxyId || "",
+        apiProxyUrl: result.apiProxyUrl || "",
+        playAt,
         selectedBy,
         requestId,
-        message: `The ${noun} is ready. Starting in 7 seconds.`,
-        sync: createMovieSyncState({ playing: true, offset: 0, startedAt: Date.now() + 7000 }),
+        message: playing ? `The ${noun} is ready. Starting in 7 seconds.` : `The ${noun} is ready. Playback is paused.`,
+        sync: createMovieSyncState({ playing, offset: resume?.offset, startedAt: playAt }),
         updatedAt: Date.now(),
       };
     } else {
-      latest.syncedMovie = {
+      room.syncedMovie = {
         status: "error",
         ...selection,
+        provider,
         proxyVideo: "",
         playAt: 0,
         selectedBy,
         requestId,
-        message: `This ${noun} could not start. Please retry or choose another ${noun}.`,
+        code: result.code || "unavailable",
+        message: result.message || `This ${noun} could not start. Please retry or choose another ${noun}.`,
         sync: createMovieSyncState(),
-        attempts: result.attempts || [],
         updatedAt: Date.now(),
       };
     }
 
-    latest.updatedAt = Date.now();
+    room.updatedAt = Date.now();
 
-    io.to(latest.id).emit("watchroom:movie-sync", {
+    io.to(room.id).emit("watchroom:movie-sync", {
       serverTime: Date.now(),
-      roomId: latest.id,
-      movie: latest.syncedMovie,
+      roomId: room.id,
+      movie: room.syncedMovie,
     });
 
-    io.to(latest.id).emit("watchroom:message", {
-      roomId: latest.id,
+    io.to(room.id).emit("watchroom:message", {
+      roomId: room.id,
       name: "System",
-      text: latest.syncedMovie.status === "ready"
-        ? `The ${noun} is ready. Your party starts in 7 seconds.`
-        : `This ${noun} could not start. Please retry or choose another ${noun}.`,
+      text: room.syncedMovie.message,
       createdAt: Date.now(),
     });
   });

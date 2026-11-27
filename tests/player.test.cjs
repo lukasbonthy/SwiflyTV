@@ -40,6 +40,15 @@ test('a playable user Play attempt emits its burst intent before playback, while
  await e.api.play();assert.deepEqual(intents,[true],'the burst begins at the Play gesture, before the film starts');
  e.api.pause();await e.api.play({remote:true});assert.deepEqual(intents,[true]);
 });
+test('Only a playable solo source reports its verified server to party setup',async()=>{
+ const e=setup({managed:false});
+ await e.api.loadSource({status:'ok',playbackUrl:'/movie.mp4',server:'vidrock'});
+ assert.equal(e.api.getState().server,undefined);
+ e.ready();
+ assert.equal(e.api.getState().server,'vidrock');
+ e.api.setRemoteMode({enabled:true,isHost:false,allowLocalRetry:true});
+ assert.equal(e.api.getState().server,undefined);
+});
 test('source search holds a blurred artwork fill until the video actually begins playing',async()=>{
  const e=setup({managed:false});
  const art=e.d.querySelector('[data-player-source-art]');
