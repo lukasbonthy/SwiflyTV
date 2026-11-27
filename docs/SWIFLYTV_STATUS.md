@@ -1,6 +1,12 @@
 # SwiflyTV working checkpoint
 
-Updated: November 21, 2026 (UTC).
+Updated: November 26, 2026 (Eastern).
+
+## Watch-party guest admission
+
+- [PR #177](https://github.com/lukasbonthy/SwiflyTV/pull/177) merged application commit `8f04f5c1c310814335c3c07f1c444cb9ddc38674`. Its tree `628ed846163693cf8b34c22c5d4be3e0df93d561` matches the tested PR. The Render deployment and live guest admission are awaiting confirmation.
+- Movie and episode invites resolve the room's current selection, including during catalog metadata outages. Party Hub keeps invite lookup and connection errors visible. Current clients join existing rooms, preserve the host, and give expired invites a clear recovery message. The site PIN still preserves the invite after entry.
+- The final tree passed 100 focused tests and [hosted playback QA](https://github.com/lukasbonthy/SwiflyTV/actions/runs/45940119533). Local Chromium with real HTTP and Socket.IO verified an independently authorized guest, expired-invite feedback, a catalog outage, and host handoff before playback. The browser fixture omitted unrelated presentation assets and gamepad monitoring due to executor crashes.
 
 ## Current release — Home Movie Nights lineup
 
